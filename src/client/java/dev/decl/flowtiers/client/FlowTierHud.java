@@ -56,7 +56,14 @@ public final class FlowTierHud {
 				if (FlowTierClientConfig.positionEnabled && ladder.hasPosition()) {
 					positionLine = "#" + ladder.position() + " " + FlowTierFormatter.displayName(ladder.ladder());
 				}
-				recordLine = ladder.wins() + "W " + ladder.losses() + "L";
+				if (FlowTierClientConfig.hudRecordEnabled) {
+					recordLine = ladder.wins() + "W " + ladder.losses() + "L";
+					if (FlowTierClientConfig.hudStreakEnabled) {
+						recordLine += "  " + streak(ladder.currentStreak());
+					}
+				} else if (FlowTierClientConfig.hudStreakEnabled) {
+					recordLine = streak(ladder.currentStreak());
+				}
 			}
 		}
 
@@ -104,7 +111,7 @@ public final class FlowTierHud {
 
 	private static String tierLine(FlowTierStats.LadderStats ladder) {
 		StringBuilder line = new StringBuilder();
-		if (FlowTierClientConfig.rankSectionEnabled) {
+		if (FlowTierClientConfig.tierEnabled) {
 			line.append(ladder.tierLabel());
 		}
 		if (FlowTierClientConfig.eloEnabled) {
@@ -121,6 +128,12 @@ public final class FlowTierHud {
 
 	private static int clamp(int value, int min, int max) {
 		return Math.max(min, Math.min(value, Math.max(min, max)));
+	}
+
+	private static String streak(int streak) {
+		if (streak > 0) return "+" + streak + " streak";
+		if (streak < 0) return streak + " streak";
+		return "0 streak";
 	}
 
 	private static int tierColor(String tier, int position) {

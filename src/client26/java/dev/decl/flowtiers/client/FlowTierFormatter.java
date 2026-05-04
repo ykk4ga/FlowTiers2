@@ -7,8 +7,10 @@ import java.util.Map;
 import java.util.Optional;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
 
 public final class FlowTierFormatter {
 	private FlowTierFormatter() {
@@ -18,10 +20,22 @@ public final class FlowTierFormatter {
 		FlowTierStats.LadderStats ladder = stats.displayLadder().orElse(null);
 
 		if (ladder == null || !ladder.hasPlayedRanked()) {
-			return Component.literal("[Unranked]").withStyle(ChatFormatting.GRAY);
+			return Component.literal("Unranked").withStyle(ChatFormatting.GRAY);
 		}
 
-		return decorated(ladder, true);
+		return decorated(ladder);
+	}
+
+	public static Component previewCompact() {
+		return Component.literal("Player").withStyle(ChatFormatting.WHITE)
+				.append(Component.literal(" "))
+				.append(icon("SWORD"))
+				.append(Component.literal(" "))
+				.append(Component.literal("Iron III").withStyle(ChatFormatting.GOLD))
+				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
+				.append(Component.literal("800 ELO").withStyle(style -> style.withColor(eloColor(800))))
+				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
+				.append(Component.literal("#123").withStyle(ChatFormatting.WHITE));
 	}
 
 	public static Component details(FlowTierStats stats) {
@@ -49,7 +63,7 @@ public final class FlowTierFormatter {
 				.append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
 				.append(Component.literal(ladder.tierLabel()).withStyle(ChatFormatting.GOLD))
 				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
-				.append(Component.literal(ladder.totalRating() + " ELO").withStyle(ChatFormatting.GREEN))
+				.append(Component.literal(ladder.totalRating() + " ELO").withStyle(style -> style.withColor(eloColor(ladder.totalRating()))))
 				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
 				.append(Component.literal(ladder.wins() + "W/" + ladder.losses() + "L").withStyle(ChatFormatting.WHITE))
 				.append(positionDetails(ladder));
@@ -64,14 +78,20 @@ public final class FlowTierFormatter {
 				.append(Component.literal(Integer.toString(ladder.position())).withStyle(ChatFormatting.WHITE));
 	}
 
-	private static Component decorated(FlowTierStats.LadderStats ladder, boolean bracketed) {
-		MutableComponent text = bracketed ? Component.literal("[").withStyle(ChatFormatting.DARK_GRAY) : Component.empty();
+	private static Component decorated(FlowTierStats.LadderStats ladder) {
+		MutableComponent text = Component.empty();
 		boolean wrotePart = false;
 
-		if (FlowTierClientConfig.rankSectionEnabled) {
-			text.append(icon(ladder.ladder()))
-					.append(Component.literal(" "))
-					.append(Component.literal(tierLabel(ladder)).withStyle(ChatFormatting.GOLD));
+		if (FlowTierClientConfig.gamemodeIconEnabled) {
+			text.append(icon(ladder.ladder()));
+			wrotePart = true;
+		}
+
+		if (FlowTierClientConfig.tierEnabled) {
+			if (wrotePart) {
+				text.append(Component.literal(" "));
+			}
+			text.append(Component.literal(tierLabel(ladder)).withStyle(ChatFormatting.GOLD));
 			wrotePart = true;
 		}
 
@@ -79,9 +99,10 @@ public final class FlowTierFormatter {
 			if (wrotePart) {
 				text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
 			}
-			text.append(Component.literal(Integer.toString(ladder.totalRating())).withStyle(ChatFormatting.GREEN));
+			int color = FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0x55FF55;
+			text.append(Component.literal(Integer.toString(ladder.totalRating())).withStyle(style -> style.withColor(color)));
 			if (FlowTierClientConfig.eloLabelEnabled) {
-				text.append(Component.literal(" ELO").withStyle(ChatFormatting.GREEN));
+				text.append(Component.literal(" ELO").withStyle(style -> style.withColor(color)));
 			}
 			wrotePart = true;
 		}
@@ -94,10 +115,6 @@ public final class FlowTierFormatter {
 				text.append(Component.literal("#").withStyle(ChatFormatting.GRAY));
 			}
 			text.append(Component.literal(Integer.toString(ladder.position())).withStyle(ChatFormatting.WHITE));
-		}
-
-		if (bracketed) {
-			text.append(Component.literal("]").withStyle(ChatFormatting.DARK_GRAY));
 		}
 
 		return text;
@@ -128,7 +145,19 @@ public final class FlowTierFormatter {
 	}
 
 	public static Component icon(String ladder) {
-		return Component.literal(String.valueOf(iconGlyph(ladder))).withStyle(ChatFormatting.WHITE);
+		return Component.literal(String.valueOf(iconGlyph(ladder))).withStyle(style -> style
+				.withFont(new FontDescription.Resource(Identifier.fromNamespaceAndPath("flowtiers", "default")))
+				.withColor(0xFFFFFF));
+	}
+
+	private static int eloColor(int elo) {
+		if (elo >= 2175) return 0x8B5CF6;
+		if (elo >= 1650) return 0x55FFFF;
+		if (elo >= 1275) return 0x50C878;
+		if (elo >= 900) return 0xFFD700;
+		if (elo >= 600) return 0xC0C0C0;
+		if (elo >= 300) return 0xCD7F32;
+		return 0xAAAAAA;
 	}
 
 	private static char iconGlyph(String ladder) {

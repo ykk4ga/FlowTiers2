@@ -53,6 +53,9 @@ loom {
 def modernClickTargets = ["1.21.9", "1.21.10", "1.21.11", "26.1", "26.1.1", "26.1.2"] as Set
 if (targetMinecraft.startsWith("26.")) {
 	sourceSets.client.java.setSrcDirs(["src/client26/java"])
+	sourceSets.client.resources {
+		srcDir "src/client26/resources"
+	}
 } else if (modernClickTargets.contains(targetMinecraft)) {
 	sourceSets.client.java {
 		srcDir "src/clientModern/java"
@@ -122,8 +125,7 @@ processResources {
 		doLast {
 			def metadataFile = file("${destinationDir}/fabric.mod.json")
 			def metadata = new groovy.json.JsonSlurper().parse(metadataFile)
-			metadata.entrypoints.remove("modmenu")
-			metadata.mixins = []
+			metadata.mixins = [[config: "flowtiers.client26.mixins.json", environment: "client"]]
 			metadataFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
 		}
 	}

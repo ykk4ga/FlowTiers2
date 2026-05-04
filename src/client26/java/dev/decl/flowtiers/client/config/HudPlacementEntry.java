@@ -2,9 +2,10 @@ package dev.decl.flowtiers.client.config;
 
 import me.shedaniel.clothconfig2.gui.entries.TextListEntry;
 import dev.decl.flowtiers.client.FlowTierClientConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
 
 final class HudPlacementEntry extends TextListEntry {
 	private static final int BUTTON_WIDTH = 104;
@@ -16,12 +17,12 @@ final class HudPlacementEntry extends TextListEntry {
 	private int resetX;
 
 	HudPlacementEntry() {
-		super(Text.literal("HUD position"), Text.literal("Edit HUD position"));
+		super(Component.literal("HUD position"), Component.literal("Edit HUD position"));
 	}
 
 	@Override
-	public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	public void extractRenderState(GuiGraphicsExtractor context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+		Minecraft client = Minecraft.getInstance();
 		int controlsWidth = BUTTON_WIDTH + GAP + RESET_WIDTH;
 		buttonX = x + entryWidth - controlsWidth - 8;
 		resetX = buttonX + BUTTON_WIDTH + GAP;
@@ -29,24 +30,24 @@ final class HudPlacementEntry extends TextListEntry {
 		boolean buttonHovered = isInsideButton(mouseX, mouseY);
 		boolean resetHovered = isInsideReset(mouseX, mouseY);
 
-		context.drawTextWithShadow(client.textRenderer, getFieldName(), x + 4, y + (entryHeight - client.textRenderer.fontHeight) / 2, 0xFFFFFFFF);
+		context.text(client.font, getFieldName(), x + 4, y + (entryHeight - client.font.lineHeight) / 2, 0xFFFFFFFF, true);
 		context.fill(buttonX, buttonY, buttonX + BUTTON_WIDTH, buttonY + BUTTON_HEIGHT, buttonHovered ? 0xFF3B82F6 : 0xFF1F2937);
 		drawBorder(context, buttonX, buttonY, BUTTON_WIDTH, BUTTON_HEIGHT, buttonHovered ? 0xFF93C5FD : 0xFF4B5563);
-		context.drawCenteredTextWithShadow(client.textRenderer, "Place HUD", buttonX + BUTTON_WIDTH / 2, buttonY + (BUTTON_HEIGHT - client.textRenderer.fontHeight) / 2, 0xFFFFFFFF);
+		context.centeredText(client.font, Component.literal("Place HUD"), buttonX + BUTTON_WIDTH / 2, buttonY + (BUTTON_HEIGHT - client.font.lineHeight) / 2, 0xFFFFFFFF);
 		context.fill(resetX, buttonY, resetX + RESET_WIDTH, buttonY + BUTTON_HEIGHT, resetHovered ? 0xFF374151 : 0xFF111827);
 		drawBorder(context, resetX, buttonY, RESET_WIDTH, BUTTON_HEIGHT, resetHovered ? 0xFF9CA3AF : 0xFF4B5563);
-		context.drawCenteredTextWithShadow(client.textRenderer, "Reset", resetX + RESET_WIDTH / 2, buttonY + (BUTTON_HEIGHT - client.textRenderer.fontHeight) / 2, 0xFFFFFFFF);
+		context.centeredText(client.font, Component.literal("Reset"), resetX + RESET_WIDTH / 2, buttonY + (BUTTON_HEIGHT - client.font.lineHeight) / 2, 0xFFFFFFFF);
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (button != 0 || (!isInsideButton(mouseX, mouseY) && !isInsideReset(mouseX, mouseY))) {
-			return super.mouseClicked(mouseX, mouseY, button);
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+		if (event.button() != 0 || (!isInsideButton(event.x(), event.y()) && !isInsideReset(event.x(), event.y()))) {
+			return super.mouseClicked(event, doubled);
 		}
 
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		if (client != null) {
-			if (isInsideReset(mouseX, mouseY)) {
+			if (isInsideReset(event.x(), event.y())) {
 				FlowTierClientConfig.hudX = 7;
 				FlowTierClientConfig.hudY = 8;
 				FlowTierClientConfig.save();
@@ -56,7 +57,7 @@ final class HudPlacementEntry extends TextListEntry {
 			client.setScreen(new HudPlacementScreen(getConfigScreen()));
 			return true;
 		}
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(event, doubled);
 	}
 
 	private boolean isInsideButton(double mouseX, double mouseY) {
@@ -67,7 +68,7 @@ final class HudPlacementEntry extends TextListEntry {
 		return mouseX >= resetX && mouseX <= resetX + RESET_WIDTH && mouseY >= buttonY && mouseY <= buttonY + BUTTON_HEIGHT;
 	}
 
-	private static void drawBorder(DrawContext context, int x, int y, int width, int height, int color) {
+	private static void drawBorder(GuiGraphicsExtractor context, int x, int y, int width, int height, int color) {
 		context.fill(x, y, x + width, y + 1, color);
 		context.fill(x, y + height - 1, x + width, y + height, color);
 		context.fill(x, y, x + 1, y + height, color);

@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "dev.decl.flowtiers.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"AvatarRendererMixin",
+		"PlayerTabOverlayMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

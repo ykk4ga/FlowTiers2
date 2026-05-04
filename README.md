@@ -66,24 +66,22 @@ Configured targets:
 
 ## Current Feature Status
 
-`1.21` through `1.21.11` are the main supported builds. They include the command, HUD, nametag, tab list, Mod Menu/Cloth Config, HUD placement, and leaderboard/player stats screens.
+`1.21` through `1.21.11` include the command, HUD, nametag stats, tab list stats, Mod Menu/Cloth Config, HUD placement, and leaderboard/player stats screens.
 
-`26.1`, `26.1.1`, and `26.1.2` build from `src/client26/java`. The 26.x port currently includes:
+`26.1`, `26.1.1`, and `26.1.2` build from `src/client26/java` and include:
 
 - `/flowtiers` command
 - FlowPvP API/cache/stats logic
 - compact HUD
 - `L` leaderboard keybind
-- basic leaderboard screen with scroll loading and ladder switching
-
-Still being ported for 26.x:
-
-- polished leaderboard tabs/search/player profile screen
 - Mod Menu and Cloth Config screen
 - draggable HUD placement screen
+- polished leaderboard tabs/search/player profile screen
 - tab list stats mixin
 - nametag stats mixin
 - custom icon font styling
+
+The full configured matrix builds successfully with `buildAllMcVersions`. Runtime testing is still recommended for 26.x mixin behavior because Mojang's 26.x client internals are separate from the 1.21 Yarn-mapped path.
 
 ## How The Build Is Split
 

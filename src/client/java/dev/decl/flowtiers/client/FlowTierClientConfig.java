@@ -22,14 +22,19 @@ public final class FlowTierClientConfig {
 	public static String preferredLadder = "SWORD";
 	public static DisplayMode displayMode = DisplayMode.PREFERRED_LADDER;
 	public static boolean rankSectionEnabled = true;
+	public static boolean gamemodeIconEnabled = true;
+	public static boolean tierEnabled = true;
 	public static boolean shortTierNames = false;
 	public static boolean eloEnabled = true;
 	public static boolean eloLabelEnabled = true;
+	public static boolean coloredElo = true;
 	public static boolean positionEnabled = true;
 	public static boolean positionLabelEnabled = true;
 	public static int hudX = 7;
 	public static int hudY = 8;
 	public static boolean hudBackground = true;
+	public static boolean hudRecordEnabled = true;
+	public static boolean hudStreakEnabled = false;
 
 	private FlowTierClientConfig() {
 	}
@@ -52,14 +57,23 @@ public final class FlowTierClientConfig {
 			preferredLadder = normalizeLadder(data.preferredLadder == null ? "SWORD" : data.preferredLadder);
 			displayMode = DisplayMode.fromName(data.displayMode);
 			rankSectionEnabled = data.rankSectionEnabled;
+			gamemodeIconEnabled = data.gamemodeIconEnabled;
+			tierEnabled = data.tierEnabled;
+			if (!rankSectionEnabled) {
+				gamemodeIconEnabled = false;
+				tierEnabled = false;
+			}
 			shortTierNames = data.shortTierNames;
 			eloEnabled = data.eloEnabled;
 			eloLabelEnabled = data.eloLabelEnabled;
+			coloredElo = data.coloredElo;
 			positionEnabled = data.positionEnabled;
 			positionLabelEnabled = data.positionLabelEnabled;
 			hudX = Math.max(0, data.hudX);
 			hudY = Math.max(0, data.hudY);
 			hudBackground = data.hudBackground;
+			hudRecordEnabled = data.hudRecordEnabled;
+			hudStreakEnabled = data.hudStreakEnabled;
 		} catch (IOException exception) {
 			FlowTiers.LOGGER.warn("Failed to load FlowTiers config.", exception);
 		}
@@ -105,14 +119,19 @@ public final class FlowTierClientConfig {
 		String preferredLadder = "SWORD";
 		String displayMode = DisplayMode.PREFERRED_LADDER.name();
 		boolean rankSectionEnabled = true;
+		boolean gamemodeIconEnabled = true;
+		boolean tierEnabled = true;
 		boolean shortTierNames = false;
 		boolean eloEnabled = true;
 		boolean eloLabelEnabled = true;
+		boolean coloredElo = true;
 		boolean positionEnabled = true;
 		boolean positionLabelEnabled = true;
 		int hudX = 7;
 		int hudY = 8;
 		boolean hudBackground = true;
+		boolean hudRecordEnabled = true;
+		boolean hudStreakEnabled = false;
 
 		static Data fromCurrent() {
 			Data data = new Data();
@@ -121,15 +140,20 @@ public final class FlowTierClientConfig {
 			data.tabListEnabled = FlowTierClientConfig.tabListEnabled;
 			data.preferredLadder = FlowTierClientConfig.preferredLadder;
 			data.displayMode = FlowTierClientConfig.displayMode.name();
-			data.rankSectionEnabled = FlowTierClientConfig.rankSectionEnabled;
+			data.rankSectionEnabled = FlowTierClientConfig.gamemodeIconEnabled || FlowTierClientConfig.tierEnabled;
+			data.gamemodeIconEnabled = FlowTierClientConfig.gamemodeIconEnabled;
+			data.tierEnabled = FlowTierClientConfig.tierEnabled;
 			data.shortTierNames = FlowTierClientConfig.shortTierNames;
 			data.eloEnabled = FlowTierClientConfig.eloEnabled;
 			data.eloLabelEnabled = FlowTierClientConfig.eloLabelEnabled;
+			data.coloredElo = FlowTierClientConfig.coloredElo;
 			data.positionEnabled = FlowTierClientConfig.positionEnabled;
 			data.positionLabelEnabled = FlowTierClientConfig.positionLabelEnabled;
 			data.hudX = FlowTierClientConfig.hudX;
 			data.hudY = FlowTierClientConfig.hudY;
 			data.hudBackground = FlowTierClientConfig.hudBackground;
+			data.hudRecordEnabled = FlowTierClientConfig.hudRecordEnabled;
+			data.hudStreakEnabled = FlowTierClientConfig.hudStreakEnabled;
 			return data;
 		}
 	}

@@ -90,10 +90,17 @@ public record FlowTierStats(UUID uuid, String name, Map<String, LadderStats> lad
 					builder.append(' ');
 				}
 
-				builder.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+				builder.append(titleCaseTierWord(word));
 			}
 
 			return builder.toString();
+		}
+
+		private static String titleCaseTierWord(String word) {
+			return switch (word.toUpperCase()) {
+				case "I", "II", "III", "IV", "V" -> word.toUpperCase();
+				default -> Character.toUpperCase(word.charAt(0)) + word.substring(1);
+			};
 		}
 	}
 }

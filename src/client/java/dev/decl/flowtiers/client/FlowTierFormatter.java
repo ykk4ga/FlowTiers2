@@ -20,10 +20,22 @@ public final class FlowTierFormatter {
 		FlowTierStats.LadderStats ladder = stats.displayLadder().orElse(null);
 
 		if (ladder == null || !ladder.hasPlayedRanked()) {
-			return Text.literal("[Unranked]").formatted(Formatting.GRAY);
+			return Text.literal("Unranked").formatted(Formatting.GRAY);
 		}
 
-		return decorated(ladder, true);
+		return decorated(ladder);
+	}
+
+	public static Text previewCompact() {
+		return Text.literal("Player").formatted(Formatting.WHITE)
+				.append(Text.literal(" "))
+				.append(icon("SWORD"))
+				.append(Text.literal(" "))
+				.append(Text.literal("Iron III").formatted(Formatting.GOLD))
+				.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY))
+				.append(Text.literal("800 ELO").setStyle(Style.EMPTY.withColor(eloColor(800))))
+				.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY))
+				.append(Text.literal("#123").formatted(Formatting.WHITE));
 	}
 
 	public static Text hud(FlowTierStats stats) {
@@ -36,7 +48,7 @@ public final class FlowTierFormatter {
 		return Text.literal("FlowPvP: ").formatted(Formatting.GRAY)
 				.append(Text.literal(stats.name()).formatted(Formatting.WHITE))
 				.append(Text.literal(" "))
-				.append(decorated(ladder, false));
+				.append(decorated(ladder));
 	}
 
 	public static Text details(FlowTierStats stats) {
@@ -64,7 +76,7 @@ public final class FlowTierFormatter {
 				.append(Text.literal(": ").formatted(Formatting.GRAY))
 				.append(Text.literal(ladder.tierLabel()).formatted(Formatting.GOLD))
 				.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY))
-				.append(Text.literal(ladder.totalRating() + " ELO").formatted(Formatting.GREEN))
+				.append(Text.literal(ladder.totalRating() + " ELO").setStyle(Style.EMPTY.withColor(eloColor(ladder.totalRating()))))
 				.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY))
 				.append(Text.literal(ladder.wins() + "W/" + ladder.losses() + "L").formatted(Formatting.WHITE))
 				.append(positionDetails(ladder));
@@ -79,14 +91,20 @@ public final class FlowTierFormatter {
 				.append(Text.literal(Integer.toString(ladder.position())).formatted(Formatting.WHITE));
 	}
 
-	private static Text decorated(FlowTierStats.LadderStats ladder, boolean bracketed) {
-		MutableText text = bracketed ? Text.literal("[").formatted(Formatting.DARK_GRAY) : Text.empty();
+	private static Text decorated(FlowTierStats.LadderStats ladder) {
+		MutableText text = Text.empty();
 		boolean wrotePart = false;
 
-		if (FlowTierClientConfig.rankSectionEnabled) {
-			text.append(icon(ladder.ladder()))
-					.append(Text.literal(" "))
-					.append(Text.literal(tierLabel(ladder)).formatted(Formatting.GOLD));
+		if (FlowTierClientConfig.gamemodeIconEnabled) {
+			text.append(icon(ladder.ladder()));
+			wrotePart = true;
+		}
+
+		if (FlowTierClientConfig.tierEnabled) {
+			if (wrotePart) {
+				text.append(Text.literal(" "));
+			}
+			text.append(Text.literal(tierLabel(ladder)).formatted(Formatting.GOLD));
 			wrotePart = true;
 		}
 
@@ -94,9 +112,10 @@ public final class FlowTierFormatter {
 			if (wrotePart) {
 				text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
 			}
-			text.append(Text.literal(Integer.toString(ladder.totalRating())).formatted(Formatting.GREEN));
+			Style eloStyle = Style.EMPTY.withColor(FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0x55FF55);
+			text.append(Text.literal(Integer.toString(ladder.totalRating())).setStyle(eloStyle));
 			if (FlowTierClientConfig.eloLabelEnabled) {
-				text.append(Text.literal(" ELO").formatted(Formatting.GREEN));
+				text.append(Text.literal(" ELO").setStyle(eloStyle));
 			}
 			wrotePart = true;
 		}
@@ -109,10 +128,6 @@ public final class FlowTierFormatter {
 				text.append(Text.literal("#").formatted(Formatting.GRAY));
 			}
 			text.append(Text.literal(Integer.toString(ladder.position())).formatted(Formatting.WHITE));
-		}
-
-		if (bracketed) {
-			text.append(Text.literal("]").formatted(Formatting.DARK_GRAY));
 		}
 
 		return text;
@@ -144,7 +159,17 @@ public final class FlowTierFormatter {
 
 	public static Text icon(String ladder) {
 		return Text.literal(String.valueOf(iconGlyph(ladder)))
-				.setStyle(Style.EMPTY.withColor(0xFFFFFF));
+				.setStyle(FlowTierMinecraftCompat.fontStyle(Identifier.of("flowtiers", "default")).withColor(0xFFFFFF));
+	}
+
+	private static int eloColor(int elo) {
+		if (elo >= 2175) return 0x8B5CF6;
+		if (elo >= 1650) return 0x55FFFF;
+		if (elo >= 1275) return 0x50C878;
+		if (elo >= 900) return 0xFFD700;
+		if (elo >= 600) return 0xC0C0C0;
+		if (elo >= 300) return 0xCD7F32;
+		return 0xAAAAAA;
 	}
 
 	private static char iconGlyph(String ladder) {
