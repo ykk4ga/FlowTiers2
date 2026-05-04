@@ -6,11 +6,7 @@ FlowTiers builds one Fabric jar per Minecraft target. The target is selected wit
 
 - Java 21 is required for the `1.21.x` targets.
 - Java 25 is required for the `26.1.x` targets.
-- On Windows, run commands from the project root:
-
-```powershell
-cd C:\Users\thede\Desktop\FlowTiers
-```
+- On Windows, run commands from the project root
 
 ## Build Commands
 
