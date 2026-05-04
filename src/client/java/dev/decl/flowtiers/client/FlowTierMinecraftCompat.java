@@ -43,6 +43,34 @@ public final class FlowTierMinecraftCompat {
 	}
 
 	public static Style fontStyle(Identifier fontId) {
+		MappingResolver mappings = FabricLoader.getInstance().getMappingResolver();
+		try {
+			String methodName = mappings.mapMethodName(
+					"named",
+					"net.minecraft.text.Style",
+					"withFont",
+					"(Lnet/minecraft/util/Identifier;)Lnet/minecraft/text/Style;"
+			);
+			Method withFont = Style.class.getMethod(methodName, Identifier.class);
+			return (Style) withFont.invoke(Style.EMPTY, fontId);
+		} catch (ReflectiveOperationException ignored) {
+		}
+
+		try {
+			Class<?> sourceClass = Class.forName(mappings.mapClassName("named", "net.minecraft.text.StyleSpriteSource"));
+			Class<?> fontClass = Class.forName(mappings.mapClassName("named", "net.minecraft.text.StyleSpriteSource$Font"));
+			Object font = fontClass.getConstructor(Identifier.class).newInstance(fontId);
+			String methodName = mappings.mapMethodName(
+					"named",
+					"net.minecraft.text.Style",
+					"withFont",
+					"(Lnet/minecraft/text/StyleSpriteSource;)Lnet/minecraft/text/Style;"
+			);
+			Method withFont = Style.class.getMethod(methodName, sourceClass);
+			return (Style) withFont.invoke(Style.EMPTY, font);
+		} catch (ReflectiveOperationException ignored) {
+		}
+
 		for (Method method : Style.class.getMethods()) {
 			if (!method.getReturnType().equals(Style.class)) continue;
 			if (method.getParameterCount() != 1) continue;

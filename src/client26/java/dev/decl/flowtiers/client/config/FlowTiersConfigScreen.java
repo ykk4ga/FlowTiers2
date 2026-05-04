@@ -63,37 +63,35 @@ public final class FlowTiersConfigScreen {
 				.setSaveConsumer(value -> FlowTierClientConfig.tabListEnabled = value)
 				.build());
 		overlay.addEntry(entries.startTextDescription(Component.literal("Preview: ").append(FlowTierFormatter.previewCompact())).build());
-
-		ConfigCategory appearance = builder.getOrCreateCategory(Component.literal("Appearance"));
-		appearance.addEntry(entries.startBooleanToggle(Component.literal("Show gamemode icon"), FlowTierClientConfig.gamemodeIconEnabled)
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show gamemode icon"), FlowTierClientConfig.gamemodeIconEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.gamemodeIconEnabled = value)
 				.build());
-		appearance.addEntry(entries.startBooleanToggle(Component.literal("Show tier"), FlowTierClientConfig.tierEnabled)
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show tier"), FlowTierClientConfig.tierEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.tierEnabled = value)
 				.build());
-		appearance.addEntry(entries.startBooleanToggle(Component.literal("Short tier names"), FlowTierClientConfig.shortTierNames)
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Short tier names"), FlowTierClientConfig.shortTierNames)
 				.setDefaultValue(false)
 				.setSaveConsumer(value -> FlowTierClientConfig.shortTierNames = value)
 				.build());
-		appearance.addEntry(entries.startBooleanToggle(Component.literal("Show ELO"), FlowTierClientConfig.eloEnabled)
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show ELO"), FlowTierClientConfig.eloEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.eloEnabled = value)
 				.build());
-		appearance.addEntry(entries.startBooleanToggle(Component.literal("Show ELO label"), FlowTierClientConfig.eloLabelEnabled)
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show ELO label"), FlowTierClientConfig.eloLabelEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.eloLabelEnabled = value)
 				.build());
-		appearance.addEntry(entries.startBooleanToggle(Component.literal("Color ELO by tier"), FlowTierClientConfig.coloredElo)
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Color ELO by tier"), FlowTierClientConfig.coloredElo)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.coloredElo = value)
 				.build());
-		appearance.addEntry(entries.startBooleanToggle(Component.literal("Show position"), FlowTierClientConfig.positionEnabled)
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show position"), FlowTierClientConfig.positionEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.positionEnabled = value)
 				.build());
-		appearance.addEntry(entries.startBooleanToggle(Component.literal("Show position label"), FlowTierClientConfig.positionLabelEnabled)
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show position label"), FlowTierClientConfig.positionLabelEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.positionLabelEnabled = value)
 				.build());

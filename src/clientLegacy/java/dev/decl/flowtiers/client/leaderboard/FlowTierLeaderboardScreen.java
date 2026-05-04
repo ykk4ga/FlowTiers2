@@ -24,6 +24,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
 	private String ladder = initialLadder();
 	private int scrollOffset;
 	private TextFieldWidget searchField;
+	private String searchQuery = "";
 	private String searchStatus = "";
 	private FlowTierLeaderboardClient.Entry resolvedSearchEntry;
 	private String pendingResolveName = "";
@@ -61,10 +62,12 @@ public final class FlowTierLeaderboardScreen extends Screen {
 		searchField = new TextFieldWidget(textRenderer, panelLeft + 8, 72, 220, 18, Text.literal("Search player"));
 		searchField.setMaxLength(32);
 		searchField.setPlaceholder(Text.literal("Search player..."));
+		searchField.setText(searchQuery);
 		searchField.setChangedListener(value -> {
+			searchQuery = value.trim();
 			searchStatus = "";
 			resolvedSearchEntry = null;
-			resolveSearchIfNeeded(value.trim());
+			resolveSearchIfNeeded(searchQuery);
 		});
 		addDrawableChild(searchField);
 		addDrawableChild(ButtonWidget.builder(Text.literal("Search"), button -> searchPlayer())
@@ -226,7 +229,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
 	}
 
 	private String searchText() {
-		return searchField == null ? "" : searchField.getText().trim();
+		return searchField == null ? searchQuery : searchField.getText().trim();
 	}
 
 	private void searchPlayer() {

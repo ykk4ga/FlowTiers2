@@ -26,6 +26,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
 	private String ladder = initialLadder();
 	private int scrollOffset;
 	private EditBox searchField;
+	private String searchQuery = "";
 	private String searchStatus = "";
 	private FlowTierLeaderboardClient.Entry resolvedSearchEntry;
 	private String pendingResolveName = "";
@@ -63,10 +64,12 @@ public final class FlowTierLeaderboardScreen extends Screen {
 		searchField = new EditBox(font, panelLeft + 8, 72, 220, 18, Component.literal("Search player"));
 		searchField.setMaxLength(32);
 		searchField.setHint(Component.literal("Search player..."));
+		searchField.setValue(searchQuery);
 		searchField.setResponder(value -> {
+			searchQuery = value.trim();
 			searchStatus = "";
 			resolvedSearchEntry = null;
-			resolveSearchIfNeeded(value.trim());
+			resolveSearchIfNeeded(searchQuery);
 		});
 		addRenderableWidget(searchField);
 		addRenderableWidget(Button.builder(Component.literal("Search"), button -> searchPlayer())
@@ -150,6 +153,10 @@ public final class FlowTierLeaderboardScreen extends Screen {
 
 	@Override
 	public boolean keyPressed(KeyEvent event) {
+		if (searchField != null && searchField.isFocused()) {
+			return super.keyPressed(event);
+		}
+
 		int index = switch (event.key()) {
 			case org.lwjgl.glfw.GLFW.GLFW_KEY_1 -> 0;
 			case org.lwjgl.glfw.GLFW.GLFW_KEY_2 -> 1;
@@ -255,7 +262,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
 	}
 
 	private String searchText() {
-		return searchField == null ? "" : searchField.getValue().trim();
+		return searchField == null ? searchQuery : searchField.getValue().trim();
 	}
 
 	private void searchPlayer() {
