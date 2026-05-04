@@ -1,0 +1,188 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
+	id 'maven-publish'
+}
+
+apply from: "gradle/versions.gradle"
+
+def targetMinecraft = (findProperty("target_mc") ?: project.minecraft_version).toString()
+def targetConfig = flowTiersVersions[targetMinecraft]
+
+if (targetConfig == null) {
+	throw new GradleException("Unsupported target_mc '${targetMinecraft}'. Supported versions: ${flowTiersVersions.keySet().join(', ')}")
+}
+
+if (targetMinecraft.startsWith("26.")) {
+	apply plugin: "net.fabricmc.fabric-loom"
+} else {
+	apply plugin: "net.fabricmc.fabric-loom-remap"
+}
+
+version = "${project.mod_version}+mc${targetConfig.minecraft}"
+group = project.maven_group
+
+repositories {
+	maven {
+		name = "Terraformers"
+		url = "https://maven.terraformersmc.com/releases/"
+	}
+	maven {
+		name = "Shedaniel"
+		url = "https://maven.shedaniel.me/"
+	}
+	// Add repositories to retrieve artifacts from in here.
+	// You should only use this when depending on other mods because
+	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
+	// for more information about repositories.
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"flowtiers" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+
+}
+
+def modernClickTargets = ["1.21.9", "1.21.10", "1.21.11", "26.1", "26.1.1", "26.1.2"] as Set
+if (targetMinecraft.startsWith("26.")) {
+	sourceSets.client.java.setSrcDirs(["src/client26/java"])
+} else if (modernClickTargets.contains(targetMinecraft)) {
+	sourceSets.client.java {
+		srcDir "src/clientModern/java"
+	}
+} else {
+	sourceSets.client.java {
+		srcDir "src/clientLegacy/java"
+	}
+}
+
+def oldRenderTargets = ["1.21", "1.21.1"] as Set
+def midRenderTargets = ["1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8"] as Set
+if (targetMinecraft.startsWith("26.")) {
+	sourceSets.client.resources {
+		exclude "flowtiers.client.mixins.json"
+	}
+} else if (oldRenderTargets.contains(targetMinecraft)) {
+	sourceSets.client.java {
+		srcDir "src/clientOldRender/java"
+	}
+} else if (midRenderTargets.contains(targetMinecraft)) {
+	sourceSets.client.java {
+		srcDir "src/clientRenderStateMid/java"
+	}
+} else {
+	sourceSets.client.java {
+		srcDir "src/clientRenderState/java"
+	}
+}
+
+dependencies {
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${targetConfig.minecraft}"
+	if (targetConfig.mappings == "yarn") {
+		mappings "net.fabricmc:yarn:${targetConfig.yarn}:v2"
+	}
+	if (targetMinecraft.startsWith("26.")) {
+		implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		implementation "net.fabricmc.fabric-api:fabric-api:${targetConfig.fabricApi}"
+		implementation "me.shedaniel.cloth:cloth-config-fabric:${targetConfig.clothConfig}"
+		compileOnly "com.terraformersmc:modmenu:${targetConfig.modMenu}"
+	} else {
+		modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+		// Fabric API. This is technically optional, but you probably want it anyway.
+		modImplementation "net.fabricmc.fabric-api:fabric-api:${targetConfig.fabricApi}"
+		modImplementation "me.shedaniel.cloth:cloth-config-fabric:${targetConfig.clothConfig}"
+		modCompileOnly "com.terraformersmc:modmenu:${targetConfig.modMenu}"
+	}
+	
+}
+
+processResources {
+	def version = project.version
+	def is26 = targetMinecraft.startsWith("26.")
+	inputs.property "version", version
+	inputs.property "minecraft_dependency", targetConfig.minecraftDependency
+	inputs.property "java_dependency", is26 ? ">=25" : ">=21"
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version,
+				"minecraft_dependency": targetConfig.minecraftDependency,
+				"java_dependency": is26 ? ">=25" : ">=21"
+	}
+
+	if (is26) {
+		doLast {
+			def metadataFile = file("${destinationDir}/fabric.mod.json")
+			def metadata = new groovy.json.JsonSlurper().parse(metadataFile)
+			metadata.entrypoints.remove("modmenu")
+			metadata.mixins = []
+			metadataFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata))
+		}
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = targetMinecraft.startsWith("26.") ? 25 : 21
+}
+
+java {
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+
+	sourceCompatibility = targetMinecraft.startsWith("26.") ? JavaVersion.VERSION_25 : JavaVersion.VERSION_21
+	targetCompatibility = targetMinecraft.startsWith("26.") ? JavaVersion.VERSION_25 : JavaVersion.VERSION_21
+}
+
+jar {
+	def projectName = project.name
+	def minecraftVersion = targetConfig.minecraft
+	inputs.property "projectName", projectName
+	inputs.property "minecraftVersion", minecraftVersion
+
+	from("LICENSE") {
+		rename { "${it}_$projectName"}
+	}
+}
+
+flowTiersVersions.each { minecraftVersion, config ->
+	def taskSuffix = minecraftVersion.replace(".", "_").replace("-", "_")
+	tasks.register("buildMc${taskSuffix}", Exec) {
+		group = "build"
+		description = "Builds FlowTiers for Minecraft ${minecraftVersion}."
+		def gradleCommand = System.getProperty("os.name").toLowerCase().contains("windows") ? "gradlew.bat" : "./gradlew"
+		commandLine gradleCommand, "build", "-Ptarget_mc=${minecraftVersion}"
+	}
+}
+
+tasks.register("buildAllMcVersions") {
+	group = "build"
+	description = "Builds FlowTiers for every configured Minecraft release target."
+	dependsOn flowTiersVersions.keySet().collect { "buildMc${it.replace(".", "_").replace("-", "_")}" }
+}
+
+// configure the maven publication
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+
+	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+	repositories {
+		// Add repositories to publish to here.
+		// Notice: This block does NOT have the same function as the block in the top level.
+		// The repositories here will be used for publishing your artifact, not for
+		// retrieving dependencies.
+	}
+}

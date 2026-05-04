@@ -1,0 +1,94 @@
+# gradle / build output
+.gradle/
+build/
+out/
+classes/
+.gradletasknamecache
+
+.examples/
+
+# local gradle overrides
+local.properties
+gradle-local.properties
+*.local.properties
+
+# eclipse
+
+*.launch
+
+# idea
+
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# vscode
+
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+
+# macos
+
+*.DS_Store
+._*
+
+# fabric / minecraft runtime output
+run/
+runs/
+logs/
+crash-reports/
+saves/
+screenshots/
+resourcepacks/
+shaderpacks/
+config/
+options.txt
+servers.dat
+usercache.json
+usernamecache.json
+
+# java diagnostics
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
+
+# compiled / packaged artifacts
+*.class
+*.jar
+*.war
+*.ear
+!gradle/wrapper/gradle-wrapper.jar
+
+# temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# environment / secrets / private credentials
+.env
+.env.*
+!.env.example
+*.secret
+*.secrets
+secrets.*
+credentials.*
+token.*
+tokens.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.keystore
+*.jks
+
+# OS / editor noise
+Thumbs.db
+desktop.ini

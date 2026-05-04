@@ -1,0 +1,44 @@
+{
+	"schemaVersion": 1,
+	"id": "flowtiers",
+	"version": "${version}",
+	"name": "FlowTiers",
+	"description": "Client-side FlowPvP ranked stats on commands, HUD, nametags, and the tab list.",
+	"authors": [
+		"decl"
+	],
+	"contact": {
+		"homepage": "https://flowpvp.gg/",
+		"sources": "https://flowpvp.gg/api"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/flowtiers/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"dev.decl.flowtiers.FlowTiers"
+		],
+		"client": [
+			"dev.decl.flowtiers.client.FlowTiersClient"
+		],
+		"modmenu": [
+			"dev.decl.flowtiers.client.config.FlowTiersModMenu"
+		]
+	},
+	"mixins": [
+		{
+			"config": "flowtiers.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "${minecraft_dependency}",
+		"java": "${java_dependency}",
+		"fabric-api": "*",
+		"cloth-config": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
+	}
+}
