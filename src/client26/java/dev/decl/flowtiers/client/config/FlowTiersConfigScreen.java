@@ -14,8 +14,7 @@ public final class FlowTiersConfigScreen {
 			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP", "GLOBAL"
 	};
 
-	private FlowTiersConfigScreen() {
-	}
+	private FlowTiersConfigScreen() {}
 
 	public static Screen create(Screen parent) {
 		ConfigBuilder builder = ConfigBuilder.create()
@@ -23,17 +22,23 @@ public final class FlowTiersConfigScreen {
 				.setTitle(Component.literal("FlowTiers"));
 		ConfigEntryBuilder entries = builder.entryBuilder();
 
+		// ── General ──────────────────────────────────────────────────────────
 		ConfigCategory general = builder.getOrCreateCategory(Component.literal("General"));
-		general.addEntry(entries.startEnumSelector(Component.literal("Display mode"), FlowTierClientConfig.DisplayMode.class, FlowTierClientConfig.displayMode)
+		general.addEntry(entries.startEnumSelector(
+						Component.literal("Display mode"),
+						FlowTierClientConfig.DisplayMode.class,
+						FlowTierClientConfig.displayMode)
 				.setDefaultValue(FlowTierClientConfig.DisplayMode.PREFERRED_LADDER)
 				.setSaveConsumer(value -> FlowTierClientConfig.displayMode = value)
 				.build());
-		general.addEntry(entries.startSelector(Component.literal("Preferred gamemode"), LADDERS, FlowTierClientConfig.preferredLadder)
+		general.addEntry(entries.startSelector(
+						Component.literal("Preferred gamemode"), LADDERS, FlowTierClientConfig.preferredLadder)
 				.setDefaultValue("SWORD")
 				.setNameProvider(value -> Component.literal(FlowTierFormatter.displayName(value)))
 				.setSaveConsumer(value -> FlowTierClientConfig.preferredLadder = FlowTierClientConfig.normalizeLadder(value))
 				.build());
 
+		// ── HUD ──────────────────────────────────────────────────────────────
 		ConfigCategory hud = builder.getOrCreateCategory(Component.literal("HUD"));
 		hud.addEntry(entries.startBooleanToggle(Component.literal("Show HUD"), FlowTierClientConfig.hudEnabled)
 				.setDefaultValue(true)
@@ -53,6 +58,7 @@ public final class FlowTiersConfigScreen {
 				.setSaveConsumer(value -> FlowTierClientConfig.hudStreakEnabled = value)
 				.build());
 
+		// ── Nametag & Tab ─────────────────────────────────────────────────────
 		ConfigCategory overlay = builder.getOrCreateCategory(Component.literal("Nametag & Tab"));
 		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show nametag stats"), FlowTierClientConfig.nametagEnabled)
 				.setDefaultValue(true)
@@ -62,39 +68,18 @@ public final class FlowTiersConfigScreen {
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.tabListEnabled = value)
 				.build());
-		overlay.addEntry(entries.startTextDescription(Component.literal("Preview: ").append(FlowTierFormatter.previewCompact())).build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show gamemode icon"), FlowTierClientConfig.gamemodeIconEnabled)
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Hide stats in ranked matches"), FlowTierClientConfig.suppressRankedDuplicates)
 				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.gamemodeIconEnabled = value)
+				.setSaveConsumer(value -> FlowTierClientConfig.suppressRankedDuplicates = value)
 				.build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show tier"), FlowTierClientConfig.tierEnabled)
-				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.tierEnabled = value)
+		overlay.addEntry(entries.startEnumSelector(
+						Component.literal("Stats position"),
+						FlowTierClientConfig.NametagAlignment.class,
+						FlowTierClientConfig.nametagAlignment)
+				.setDefaultValue(FlowTierClientConfig.NametagAlignment.LEFT)
+				.setSaveConsumer(value -> FlowTierClientConfig.nametagAlignment = value)
 				.build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Short tier names"), FlowTierClientConfig.shortTierNames)
-				.setDefaultValue(false)
-				.setSaveConsumer(value -> FlowTierClientConfig.shortTierNames = value)
-				.build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show ELO"), FlowTierClientConfig.eloEnabled)
-				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.eloEnabled = value)
-				.build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show ELO label"), FlowTierClientConfig.eloLabelEnabled)
-				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.eloLabelEnabled = value)
-				.build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Color ELO by tier"), FlowTierClientConfig.coloredElo)
-				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.coloredElo = value)
-				.build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show position"), FlowTierClientConfig.positionEnabled)
-				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.positionEnabled = value)
-				.build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show position label"), FlowTierClientConfig.positionLabelEnabled)
-				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.positionLabelEnabled = value)
-				.build());
+		overlay.addEntry(new NametagLayoutButtonEntry(parent));
 
 		builder.setSavingRunnable(FlowTierClientConfig::save);
 		return builder.build();

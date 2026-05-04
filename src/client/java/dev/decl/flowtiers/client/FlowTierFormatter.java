@@ -27,15 +27,12 @@ public final class FlowTierFormatter {
 	}
 
 	public static Text previewCompact() {
-		return Text.literal("Player").formatted(Formatting.WHITE)
-				.append(Text.literal(" "))
-				.append(icon("SWORD"))
-				.append(Text.literal(" "))
-				.append(Text.literal("Iron III").formatted(Formatting.GOLD))
-				.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY))
-				.append(Text.literal("800 ELO").setStyle(Style.EMPTY.withColor(eloColor(800))))
-				.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY))
-				.append(Text.literal("#123").formatted(Formatting.WHITE));
+		// fake ladder stats for preview
+		FlowTierStats.LadderStats fake = new FlowTierStats.LadderStats(
+				FlowTierClientConfig.preferredLadder,
+				800, 10, 5, 2, 10, "IRON_III", 123
+		);
+		return decorated(fake);
 	}
 
 	public static Text hud(FlowTierStats stats) {
@@ -95,41 +92,39 @@ public final class FlowTierFormatter {
 		MutableText text = Text.empty();
 		boolean wrotePart = false;
 
-		if (FlowTierClientConfig.gamemodeIconEnabled) {
-			text.append(icon(ladder.ladder()));
-			wrotePart = true;
+		for (FlowTierClientConfig.NametagComponent component : FlowTierClientConfig.nametagOrder) {
+			switch (component) {
+				case GAMEMODE_ICON -> {
+					if (!FlowTierClientConfig.gamemodeIconEnabled) continue;
+					if (wrotePart) text.append(Text.literal(" "));
+					text.append(icon(ladder.ladder()));
+					wrotePart = true;
+				}
+				case TIER -> {
+					if (!FlowTierClientConfig.tierEnabled) continue;
+					if (wrotePart) text.append(Text.literal(" "));
+					text.append(Text.literal(tierLabel(ladder)).formatted(Formatting.GOLD));
+					wrotePart = true;
+				}
+				case ELO -> {
+					if (!FlowTierClientConfig.eloEnabled) continue;
+					if (wrotePart) text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
+					Style eloStyle = Style.EMPTY.withColor(FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0x55FF55);
+					text.append(Text.literal(Integer.toString(ladder.totalRating())).setStyle(eloStyle));
+					if (FlowTierClientConfig.eloLabelEnabled)
+						text.append(Text.literal(" ELO").setStyle(eloStyle));
+					wrotePart = true;
+				}
+				case POSITION -> {
+					if (!FlowTierClientConfig.positionEnabled || !ladder.hasPosition()) continue;
+					if (wrotePart) text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
+					if (FlowTierClientConfig.positionLabelEnabled)
+						text.append(Text.literal("#").formatted(Formatting.GRAY));
+					text.append(Text.literal(Integer.toString(ladder.position())).formatted(Formatting.WHITE));
+					wrotePart = true;
+				}
+			}
 		}
-
-		if (FlowTierClientConfig.tierEnabled) {
-			if (wrotePart) {
-				text.append(Text.literal(" "));
-			}
-			text.append(Text.literal(tierLabel(ladder)).formatted(Formatting.GOLD));
-			wrotePart = true;
-		}
-
-		if (FlowTierClientConfig.eloEnabled) {
-			if (wrotePart) {
-				text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
-			}
-			Style eloStyle = Style.EMPTY.withColor(FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0x55FF55);
-			text.append(Text.literal(Integer.toString(ladder.totalRating())).setStyle(eloStyle));
-			if (FlowTierClientConfig.eloLabelEnabled) {
-				text.append(Text.literal(" ELO").setStyle(eloStyle));
-			}
-			wrotePart = true;
-		}
-
-		if (FlowTierClientConfig.positionEnabled && ladder.hasPosition()) {
-			if (wrotePart) {
-				text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
-			}
-			if (FlowTierClientConfig.positionLabelEnabled) {
-				text.append(Text.literal("#").formatted(Formatting.GRAY));
-			}
-			text.append(Text.literal(Integer.toString(ladder.position())).formatted(Formatting.WHITE));
-		}
-
 		return text;
 	}
 

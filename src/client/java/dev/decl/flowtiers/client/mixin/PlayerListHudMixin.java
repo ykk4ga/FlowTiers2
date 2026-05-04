@@ -17,9 +17,8 @@ import net.minecraft.text.Text;
 public class PlayerListHudMixin {
 	@Inject(method = "getPlayerName", at = @At("RETURN"), cancellable = true)
 	private void flowtiers$appendTabStats(PlayerListEntry entry, CallbackInfoReturnable<Text> cir) {
-		if (!FlowTierClientConfig.tabListEnabled) {
-			return;
-		}
+		if (!FlowTierClientConfig.tabListEnabled) return;
+		if (FlowTierClientConfig.suppressRankedDuplicates && dev.decl.flowtiers.client.RankedMatchDetector.isInRankedMatch()) return;
 
 		FlowTiersClientState.cache().fetch(FlowTierMinecraftCompat.profileId(entry.getProfile()));
 		FlowTiersClientState.cache().getIfFresh(FlowTierMinecraftCompat.profileId(entry.getProfile())).ifPresent(stats ->

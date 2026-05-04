@@ -17,20 +17,21 @@ import net.minecraft.text.Text;
 public class PlayerEntityRendererMixin {
 	@Inject(method = "updateRenderState(Lnet/minecraft/entity/PlayerLikeEntity;Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;F)V", at = @At("TAIL"))
 	private void flowtiers$appendNametagStats(PlayerLikeEntity player, PlayerEntityRenderState state, float tickProgress, CallbackInfo ci) {
-		if (!FlowTierClientConfig.nametagEnabled) {
-			return;
-		}
+		if (!FlowTierClientConfig.nametagEnabled) return;
+		if (FlowTierClientConfig.suppressRankedDuplicates && dev.decl.flowtiers.client.RankedMatchDetector.isInRankedMatch()) return;
 
 		FlowTiersClientState.cache().fetch(player.getUuid());
 		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
 			Text suffix = FlowTierFormatter.compact(stats);
-			state.displayName = state.displayName == null
-					? suffix
-					: state.displayName.copy().append(Text.literal(" ")).append(suffix);
-			// not needed
-//			state.playerName = state.playerName == null
-//					? suffix
-//					: state.playerName.copy().append(Text.literal(" ")).append(suffix);
+			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
+				state.displayName = suffix.copy()
+						.append(Text.literal(" "))
+						.append(state.displayName == null ? Text.empty() : state.displayName);
+			} else {
+				state.displayName = (state.displayName == null ? Text.empty() : state.displayName.copy())
+						.append(Text.literal(" "))
+						.append(suffix);
+			}
 		});
 	}
 }

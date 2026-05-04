@@ -4,18 +4,20 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.decl.flowtiers.client.leaderboard.FlowTierLeaderboardScreen;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public final class FlowTierKeybinds {
-	private FlowTierKeybinds() {
-	}
+	private FlowTierKeybinds() {}
 
-	private static final String[] LADDERS = {
+	private static final String[] CYCLE = {
+			"MODE:GLOBAL", "MODE:HIGHEST_TIER",
 			"SWORD", "AXE", "UHC", "VANILLA", "MACE",
-			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP", "GLOBAL"
+			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP"
 	};
 
 	private static KeyMapping.Category cachedCategory = null;
@@ -73,18 +75,48 @@ public final class FlowTierKeybinds {
 	}
 
 	private static void cycleLadder(Minecraft client, int direction) {
-		FlowTierClientConfig.displayMode = FlowTierClientConfig.DisplayMode.PREFERRED_LADDER;
-		String current = FlowTierClientConfig.preferredLadder;
-		int idx = 0;
-		for (int i = 0; i < LADDERS.length; i++) {
-			if (LADDERS[i].equals(current)) { idx = i; break; }
+		String current;
+		if (FlowTierClientConfig.displayMode == FlowTierClientConfig.DisplayMode.GLOBAL) {
+			current = "MODE:GLOBAL";
+		} else if (FlowTierClientConfig.displayMode == FlowTierClientConfig.DisplayMode.HIGHEST_TIER) {
+			current = "MODE:HIGHEST_TIER";
+		} else {
+			current = FlowTierClientConfig.preferredLadder;
 		}
-		FlowTierClientConfig.preferredLadder = LADDERS[((idx + direction) % LADDERS.length + LADDERS.length) % LADDERS.length];
+
+		int idx = 0;
+		for (int i = 0; i < CYCLE.length; i++) {
+			if (CYCLE[i].equals(current)) { idx = i; break; }
+		}
+
+		String next = CYCLE[((idx + direction) % CYCLE.length + CYCLE.length) % CYCLE.length];
+
+		if (next.equals("MODE:GLOBAL")) {
+			FlowTierClientConfig.displayMode = FlowTierClientConfig.DisplayMode.GLOBAL;
+		} else if (next.equals("MODE:HIGHEST_TIER")) {
+			FlowTierClientConfig.displayMode = FlowTierClientConfig.DisplayMode.HIGHEST_TIER;
+		} else {
+			FlowTierClientConfig.displayMode = FlowTierClientConfig.DisplayMode.PREFERRED_LADDER;
+			FlowTierClientConfig.preferredLadder = next;
+		}
+
 		FlowTierClientConfig.save();
+
 		if (client.player != null) {
-			client.player.sendSystemMessage(
-					net.minecraft.network.chat.Component.literal("FlowTiers: " + FlowTierFormatter.displayName(FlowTierClientConfig.preferredLadder))
-			);
+			String label = next.equals("MODE:GLOBAL") ? "Global"
+					: next.equals("MODE:HIGHEST_TIER") ? "Highest Tier"
+					: FlowTierFormatter.displayName(next);
+
+			Component icon = next.startsWith("MODE:")
+					? FlowTierFormatter.icon("GLOBAL")
+					: FlowTierFormatter.icon(next);
+
+			Component msg = Component.literal("FlowTiers: " + label + " ")
+					.withStyle(ChatFormatting.GREEN)
+					.copy()
+					.append(icon);
+
+			client.gui.setOverlayMessage(msg, false);
 		}
 	}
 

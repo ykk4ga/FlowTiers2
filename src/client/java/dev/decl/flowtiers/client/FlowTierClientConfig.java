@@ -5,6 +5,9 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,21 +25,30 @@ public final class FlowTierClientConfig {
 	public static String preferredLadder = "SWORD";
 	public static DisplayMode displayMode = DisplayMode.PREFERRED_LADDER;
 	public static boolean rankSectionEnabled = true;
-	public static boolean gamemodeIconEnabled = true;
-	public static boolean tierEnabled = true;
 	public static boolean shortTierNames = false;
-	public static boolean eloEnabled = true;
-	public static boolean eloLabelEnabled = true;
 	public static boolean coloredElo = true;
-	public static boolean positionEnabled = true;
-	public static boolean positionLabelEnabled = true;
+	public static NametagAlignment nametagAlignment = NametagAlignment.LEFT;
+	public static boolean gamemodeIconEnabled = true;
+	public static boolean tierEnabled = false;
+	public static boolean eloEnabled = true;
+	public static boolean eloLabelEnabled = false;
+	public static boolean positionEnabled = false;
+	public static boolean positionLabelEnabled = false;
 	public static int hudX = 7;
 	public static int hudY = 8;
 	public static boolean hudBackground = true;
 	public static boolean hudRecordEnabled = true;
 	public static boolean hudStreakEnabled = false;
+	public static boolean suppressRankedDuplicates = true;
+	public static List<NametagComponent> nametagOrder = defaultNametagOrder();
 
-	private FlowTierClientConfig() {
+	private FlowTierClientConfig() {}
+
+	public static List<NametagComponent> defaultNametagOrder() {
+		return new ArrayList<>(List.of(
+				NametagComponent.GAMEMODE_ICON, NametagComponent.TIER,
+				NametagComponent.ELO, NametagComponent.POSITION
+		));
 	}
 
 	public static void load() {
@@ -47,9 +59,7 @@ public final class FlowTierClientConfig {
 
 		try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
 			Data data = GSON.fromJson(reader, Data.class);
-			if (data == null) {
-				return;
-			}
+			if (data == null) return;
 
 			hudEnabled = data.hudEnabled;
 			nametagEnabled = data.nametagEnabled;
@@ -74,6 +84,18 @@ public final class FlowTierClientConfig {
 			hudBackground = data.hudBackground;
 			hudRecordEnabled = data.hudRecordEnabled;
 			hudStreakEnabled = data.hudStreakEnabled;
+			nametagAlignment = data.nametagAlignment == null ? NametagAlignment.LEFT :
+					NametagAlignment.valueOf(data.nametagAlignment.toUpperCase());
+			suppressRankedDuplicates = data.suppressRankedDuplicates;
+			if (data.nametagOrder != null && !data.nametagOrder.isEmpty()) {
+				nametagOrder = new ArrayList<>();
+				for (String s : data.nametagOrder) {
+					try { nametagOrder.add(NametagComponent.valueOf(s)); } catch (Exception ignored) {}
+				}
+				if (nametagOrder.isEmpty()) nametagOrder = defaultNametagOrder();
+			} else {
+				nametagOrder = defaultNametagOrder();
+			}
 		} catch (IOException exception) {
 			FlowTiers.LOGGER.warn("Failed to load FlowTiers config.", exception);
 		}
@@ -95,21 +117,28 @@ public final class FlowTierClientConfig {
 	}
 
 	public enum DisplayMode {
-		PREFERRED_LADDER,
-		HIGHEST_TIER,
-		GLOBAL;
+		PREFERRED_LADDER, HIGHEST_TIER, GLOBAL;
 
 		public static DisplayMode fromName(String name) {
-			if (name == null) {
-				return PREFERRED_LADDER;
-			}
-
+			if (name == null) return PREFERRED_LADDER;
 			try {
 				return DisplayMode.valueOf(name.trim().toUpperCase());
 			} catch (IllegalArgumentException ignored) {
 				return PREFERRED_LADDER;
 			}
 		}
+	}
+
+	public enum NametagAlignment {
+		LEFT, RIGHT;
+
+		public NametagAlignment next() {
+			return this == LEFT ? RIGHT : LEFT;
+		}
+	}
+
+	public enum NametagComponent {
+		GAMEMODE_ICON, TIER, ELO, POSITION
 	}
 
 	private static final class Data {
@@ -119,19 +148,22 @@ public final class FlowTierClientConfig {
 		String preferredLadder = "SWORD";
 		String displayMode = DisplayMode.PREFERRED_LADDER.name();
 		boolean rankSectionEnabled = true;
-		boolean gamemodeIconEnabled = true;
-		boolean tierEnabled = true;
 		boolean shortTierNames = false;
+		boolean gamemodeIconEnabled = true;
+		boolean tierEnabled = false;
 		boolean eloEnabled = true;
-		boolean eloLabelEnabled = true;
+		boolean eloLabelEnabled = false;
 		boolean coloredElo = true;
-		boolean positionEnabled = true;
-		boolean positionLabelEnabled = true;
+		boolean positionEnabled = false;
+		boolean positionLabelEnabled = false;
 		int hudX = 7;
 		int hudY = 8;
 		boolean hudBackground = true;
 		boolean hudRecordEnabled = true;
 		boolean hudStreakEnabled = false;
+		String nametagAlignment = NametagAlignment.LEFT.name();
+		List<String> nametagOrder = null;
+		boolean suppressRankedDuplicates = true;
 
 		static Data fromCurrent() {
 			Data data = new Data();
@@ -154,6 +186,10 @@ public final class FlowTierClientConfig {
 			data.hudBackground = FlowTierClientConfig.hudBackground;
 			data.hudRecordEnabled = FlowTierClientConfig.hudRecordEnabled;
 			data.hudStreakEnabled = FlowTierClientConfig.hudStreakEnabled;
+			data.nametagAlignment = FlowTierClientConfig.nametagAlignment.name();
+			data.nametagOrder = FlowTierClientConfig.nametagOrder.stream()
+					.map(Enum::name).collect(Collectors.toList());
+			data.suppressRankedDuplicates = FlowTierClientConfig.suppressRankedDuplicates;
 			return data;
 		}
 	}

@@ -7,35 +7,28 @@ import java.util.Map;
 import java.util.Optional;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.resources.Identifier;
 
 public final class FlowTierFormatter {
-	private FlowTierFormatter() {
-	}
+	private FlowTierFormatter() {}
 
 	public static Component compact(FlowTierStats stats) {
 		FlowTierStats.LadderStats ladder = stats.displayLadder().orElse(null);
-
 		if (ladder == null || !ladder.hasPlayedRanked()) {
 			return Component.literal("Unranked").withStyle(ChatFormatting.GRAY);
 		}
-
 		return decorated(ladder);
 	}
 
 	public static Component previewCompact() {
-		return Component.literal("Player").withStyle(ChatFormatting.WHITE)
-				.append(Component.literal(" "))
-				.append(icon("SWORD"))
-				.append(Component.literal(" "))
-				.append(Component.literal("Iron III").withStyle(ChatFormatting.GOLD))
-				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
-				.append(Component.literal("800 ELO").withStyle(style -> style.withColor(eloColor(800))))
-				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
-				.append(Component.literal("#123").withStyle(ChatFormatting.WHITE));
+		FlowTierStats.LadderStats fake = new FlowTierStats.LadderStats(
+				FlowTierClientConfig.preferredLadder,
+				800, 10, 5, 2, 10, "IRON_III", 123
+		);
+		return decorated(fake);
 	}
 
 	public static Component details(FlowTierStats stats) {
@@ -63,17 +56,14 @@ public final class FlowTierFormatter {
 				.append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
 				.append(Component.literal(ladder.tierLabel()).withStyle(ChatFormatting.GOLD))
 				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
-				.append(Component.literal(ladder.totalRating() + " ELO").withStyle(style -> style.withColor(eloColor(ladder.totalRating()))))
+				.append(Component.literal(ladder.totalRating() + " ELO").withStyle(s -> s.withColor(eloColor(ladder.totalRating()))))
 				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
 				.append(Component.literal(ladder.wins() + "W/" + ladder.losses() + "L").withStyle(ChatFormatting.WHITE))
 				.append(positionDetails(ladder));
 	}
 
 	private static Component positionDetails(FlowTierStats.LadderStats ladder) {
-		if (!ladder.hasPosition()) {
-			return Component.empty();
-		}
-
+		if (!ladder.hasPosition()) return Component.empty();
 		return Component.literal(" | #").withStyle(ChatFormatting.GRAY)
 				.append(Component.literal(Integer.toString(ladder.position())).withStyle(ChatFormatting.WHITE));
 	}
@@ -82,54 +72,46 @@ public final class FlowTierFormatter {
 		MutableComponent text = Component.empty();
 		boolean wrotePart = false;
 
-		if (FlowTierClientConfig.gamemodeIconEnabled) {
-			text.append(icon(ladder.ladder()));
-			wrotePart = true;
+		for (FlowTierClientConfig.NametagComponent component : FlowTierClientConfig.nametagOrder) {
+			switch (component) {
+				case GAMEMODE_ICON -> {
+					if (!FlowTierClientConfig.gamemodeIconEnabled) continue;
+					if (wrotePart) text.append(Component.literal(" "));
+					text.append(icon(ladder.ladder()));
+					wrotePart = true;
+				}
+				case TIER -> {
+					if (!FlowTierClientConfig.tierEnabled) continue;
+					if (wrotePart) text.append(Component.literal(" "));
+					text.append(Component.literal(tierLabel(ladder)).withStyle(ChatFormatting.GOLD));
+					wrotePart = true;
+				}
+				case ELO -> {
+					if (!FlowTierClientConfig.eloEnabled) continue;
+					if (wrotePart) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+					int color = FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0x55FF55;
+					text.append(Component.literal(Integer.toString(ladder.totalRating())).withStyle(s -> s.withColor(color)));
+					if (FlowTierClientConfig.eloLabelEnabled)
+						text.append(Component.literal(" ELO").withStyle(s -> s.withColor(color)));
+					wrotePart = true;
+				}
+				case POSITION -> {
+					if (!FlowTierClientConfig.positionEnabled || !ladder.hasPosition()) continue;
+					if (wrotePart) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+					if (FlowTierClientConfig.positionLabelEnabled)
+						text.append(Component.literal("#").withStyle(ChatFormatting.GRAY));
+					text.append(Component.literal(Integer.toString(ladder.position())).withStyle(ChatFormatting.WHITE));
+					wrotePart = true;
+				}
+			}
 		}
-
-		if (FlowTierClientConfig.tierEnabled) {
-			if (wrotePart) {
-				text.append(Component.literal(" "));
-			}
-			text.append(Component.literal(tierLabel(ladder)).withStyle(ChatFormatting.GOLD));
-			wrotePart = true;
-		}
-
-		if (FlowTierClientConfig.eloEnabled) {
-			if (wrotePart) {
-				text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
-			}
-			int color = FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0x55FF55;
-			text.append(Component.literal(Integer.toString(ladder.totalRating())).withStyle(style -> style.withColor(color)));
-			if (FlowTierClientConfig.eloLabelEnabled) {
-				text.append(Component.literal(" ELO").withStyle(style -> style.withColor(color)));
-			}
-			wrotePart = true;
-		}
-
-		if (FlowTierClientConfig.positionEnabled && ladder.hasPosition()) {
-			if (wrotePart) {
-				text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
-			}
-			if (FlowTierClientConfig.positionLabelEnabled) {
-				text.append(Component.literal("#").withStyle(ChatFormatting.GRAY));
-			}
-			text.append(Component.literal(Integer.toString(ladder.position())).withStyle(ChatFormatting.WHITE));
-		}
-
 		return text;
 	}
 
 	private static String tierLabel(FlowTierStats.LadderStats ladder) {
-		if (!FlowTierClientConfig.shortTierNames) {
-			return ladder.tierLabel();
-		}
-
+		if (!FlowTierClientConfig.shortTierNames) return ladder.tierLabel();
 		String[] words = ladder.tierLabel().split("\\s+");
-		if (words.length < 2) {
-			return ladder.tierLabel();
-		}
-
+		if (words.length < 2) return ladder.tierLabel();
 		return words[0].substring(0, 1).toUpperCase() + shortDivision(words[1]);
 	}
 

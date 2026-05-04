@@ -11,11 +11,6 @@ public final class FlowTierKeybinds {
 	private FlowTierKeybinds() {
 	}
 
-	private static final String[] LADDERS = {
-			"SWORD", "AXE", "UHC", "VANILLA", "MACE",
-			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP", "GLOBAL"
-	};
-
 	public static void register() {
 		KeyBinding leaderboard = KeyBindingHelper.registerKeyBinding(FlowTierMinecraftCompat.keyBinding(
 				"key.flowtiers.open_leaderboard",
@@ -56,22 +51,57 @@ public final class FlowTierKeybinds {
 		});
 	}
 
-	private static void cycleLadder(net.minecraft.client.MinecraftClient client, int direction) {
-		FlowTierClientConfig.displayMode = FlowTierClientConfig.DisplayMode.PREFERRED_LADDER;
+	private static final String[] CYCLE = {
+			"MODE:GLOBAL",
+			"MODE:HIGHEST_TIER",
+			"SWORD", "AXE", "UHC", "VANILLA", "MACE",
+			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP"
+	};
 
-		String current = FlowTierClientConfig.preferredLadder;
-		int idx = 0;
-		for (int i = 0; i < LADDERS.length; i++) {
-			if (LADDERS[i].equals(current)) { idx = i; break; }
+	private static void cycleLadder(net.minecraft.client.MinecraftClient client, int direction) {
+		// find current position in cycle
+		String current;
+		if (FlowTierClientConfig.displayMode == FlowTierClientConfig.DisplayMode.GLOBAL) {
+			current = "MODE:GLOBAL";
+		} else if (FlowTierClientConfig.displayMode == FlowTierClientConfig.DisplayMode.HIGHEST_TIER) {
+			current = "MODE:HIGHEST_TIER";
+		} else {
+			current = FlowTierClientConfig.preferredLadder;
 		}
-		FlowTierClientConfig.preferredLadder = LADDERS[((idx + direction) % LADDERS.length + LADDERS.length) % LADDERS.length];
+
+		int idx = 0;
+		for (int i = 0; i < CYCLE.length; i++) {
+			if (CYCLE[i].equals(current)) { idx = i; break; }
+		}
+
+		String next = CYCLE[((idx + direction) % CYCLE.length + CYCLE.length) % CYCLE.length];
+
+		if (next.equals("MODE:GLOBAL")) {
+			FlowTierClientConfig.displayMode = FlowTierClientConfig.DisplayMode.GLOBAL;
+		} else if (next.equals("MODE:HIGHEST_TIER")) {
+			FlowTierClientConfig.displayMode = FlowTierClientConfig.DisplayMode.HIGHEST_TIER;
+		} else {
+			FlowTierClientConfig.displayMode = FlowTierClientConfig.DisplayMode.PREFERRED_LADDER;
+			FlowTierClientConfig.preferredLadder = next;
+		}
+
 		FlowTierClientConfig.save();
+
 		if (client.player != null) {
-			client.player.sendMessage(
-					net.minecraft.text.Text.literal("FlowTiers: " + FlowTierFormatter.displayName(FlowTierClientConfig.preferredLadder))
-							.formatted(net.minecraft.util.Formatting.GREEN),
-					true
-			);
+			String label = next.equals("MODE:GLOBAL") ? "Global"
+					: next.equals("MODE:HIGHEST_TIER") ? "Highest Tier"
+					: FlowTierFormatter.displayName(next);
+
+			net.minecraft.text.MutableText msg = net.minecraft.text.Text.literal("FlowTiers: " + label + " ")
+					.formatted(net.minecraft.util.Formatting.GREEN);
+
+			if (next.equals("MODE:GLOBAL") || next.equals("MODE:HIGHEST_TIER")) {
+				msg.append(FlowTierFormatter.icon("GLOBAL"));
+			} else {
+				msg.append(FlowTierFormatter.icon(next));
+			}
+
+			client.player.sendMessage(msg, true);
 		}
 	}
 
