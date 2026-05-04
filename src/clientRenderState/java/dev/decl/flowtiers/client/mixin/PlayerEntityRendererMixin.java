@@ -27,9 +27,10 @@ public class PlayerEntityRendererMixin {
 			state.displayName = state.displayName == null
 					? suffix
 					: state.displayName.copy().append(Text.literal(" ")).append(suffix);
-			state.playerName = state.playerName == null
-					? suffix
-					: state.playerName.copy().append(Text.literal(" ")).append(suffix);
+			// not needed
+//			state.playerName = state.playerName == null
+//					? suffix
+//					: state.playerName.copy().append(Text.literal(" ")).append(suffix);
 		});
 	}
 }

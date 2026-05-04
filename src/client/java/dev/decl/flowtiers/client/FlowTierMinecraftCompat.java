@@ -43,82 +43,75 @@ public final class FlowTierMinecraftCompat {
 	}
 
 	public static Style fontStyle(Identifier fontId) {
-		MappingResolver mappings = FabricLoader.getInstance().getMappingResolver();
-		try {
-			String methodName = mappings.mapMethodName(
-					"named",
-					"net.minecraft.text.Style",
-					"withFont",
-					"(Lnet/minecraft/util/Identifier;)Lnet/minecraft/text/Style;"
-			);
-			Method withFont = Style.class.getMethod(methodName, Identifier.class);
-			return (Style) withFont.invoke(Style.EMPTY, fontId);
-		} catch (ReflectiveOperationException ignored) {
+		for (Method method : Style.class.getMethods()) {
+			if (!method.getReturnType().equals(Style.class)) continue;
+			if (method.getParameterCount() != 1) continue;
+			if (!method.getParameterTypes()[0].isAssignableFrom(fontId.getClass())) continue;
+			if (!method.getName().toLowerCase().contains("font")) continue;
 			try {
-				Class<?> sourceClass = Class.forName(mappings.mapClassName("named", "net.minecraft.text.StyleSpriteSource"));
-				Class<?> fontClass = Class.forName(mappings.mapClassName("named", "net.minecraft.text.StyleSpriteSource$Font"));
-				Object font = fontClass.getConstructor(Identifier.class).newInstance(fontId);
-				String methodName = mappings.mapMethodName(
-						"named",
-						"net.minecraft.text.Style",
-						"withFont",
-						"(Lnet/minecraft/text/StyleSpriteSource;)Lnet/minecraft/text/Style;"
-				);
-				Method withFont = Style.class.getMethod(methodName, sourceClass);
-				return (Style) withFont.invoke(Style.EMPTY, font);
-			} catch (ReflectiveOperationException exception) {
-				return Style.EMPTY;
+				Style result = (Style) method.invoke(Style.EMPTY, fontId);
+				if (result != null) return result;
+			} catch (Exception ignored) {
 			}
 		}
+		return Style.EMPTY;
 	}
 
 	public static KeyBinding keyBinding(String translationKey, int code, String categoryTranslationKey) {
-		MappingResolver mappings = FabricLoader.getInstance().getMappingResolver();
+		// 1.21.2+
 		try {
-			Constructor<KeyBinding> constructor = KeyBinding.class.getConstructor(String.class, InputUtil.Type.class, int.class, String.class);
+			Constructor<KeyBinding> constructor = KeyBinding.class.getConstructor(
+					String.class, InputUtil.Type.class, int.class, String.class);
 			return constructor.newInstance(translationKey, InputUtil.Type.KEYSYM, code, categoryTranslationKey);
 		} catch (ReflectiveOperationException ignored) {
-			try {
-				return categorizedKeyBinding(translationKey, code, mappings);
-			} catch (ReflectiveOperationException exception) {
-				throw new IllegalStateException("Could not create FlowTiers keybinding.", exception);
-			}
+		}
+
+		// before 1.21.2
+		try {
+			return categorizedKeyBinding(translationKey, code,
+					FabricLoader.getInstance().getMappingResolver());
+		} catch (ReflectiveOperationException exception) {
+			throw new IllegalStateException("Could not create FlowTiers keybinding.", exception);
 		}
 	}
+
+	private static Object cachedCategory = null;
 
 	private static KeyBinding categorizedKeyBinding(String translationKey, int code, MappingResolver mappings) throws ReflectiveOperationException {
-		ReflectiveOperationException mappedFailure;
-		try {
-			Class<?> categoryClass = Class.forName(mappings.mapClassName("named", "net.minecraft.client.option.KeyBinding$Category"));
-			String createName = mappings.mapMethodName(
-					"named",
-					"net.minecraft.client.option.KeyBinding$Category",
-					"create",
-					"(Lnet/minecraft/util/Identifier;)Lnet/minecraft/client/option/KeyBinding$Category;"
-			);
-			return categorizedKeyBinding(translationKey, code, categoryClass, categoryClass.getMethod(createName, Identifier.class));
-		} catch (ReflectiveOperationException exception) {
-			mappedFailure = exception;
-		}
-
-		for (Class<?> categoryClass : KeyBinding.class.getDeclaredClasses()) {
-			for (Method create : categoryClass.getDeclaredMethods()) {
-				if (Modifier.isStatic(create.getModifiers())
-						&& create.getParameterCount() == 1
-						&& create.getParameterTypes()[0] == Identifier.class
-						&& create.getReturnType() == categoryClass) {
-					return categorizedKeyBinding(translationKey, code, categoryClass, create);
+		if (cachedCategory == null) {
+			try {
+				Class<?> categoryClass = Class.forName(mappings.mapClassName("named", "net.minecraft.client.option.KeyBinding$Category"));
+				String createName = mappings.mapMethodName(
+						"named",
+						"net.minecraft.client.option.KeyBinding$Category",
+						"create",
+						"(Lnet/minecraft/util/Identifier;)Lnet/minecraft/client/option/KeyBinding$Category;"
+				);
+				Method create = categoryClass.getMethod(createName, Identifier.class);
+				create.setAccessible(true);
+				cachedCategory = create.invoke(null, Identifier.of("flowtiers", "category"));
+			} catch (ReflectiveOperationException exception) {
+				for (Class<?> categoryClass : KeyBinding.class.getDeclaredClasses()) {
+					for (Method create : categoryClass.getDeclaredMethods()) {
+						if (Modifier.isStatic(create.getModifiers())
+								&& create.getParameterCount() == 1
+								&& create.getParameterTypes()[0] == Identifier.class
+								&& create.getReturnType() == categoryClass) {
+							create.setAccessible(true);
+							cachedCategory = create.invoke(null, Identifier.of("flowtiers", "category"));
+							break;
+						}
+					}
+					if (cachedCategory != null) break;
 				}
+			}
+			if (cachedCategory == null) {
+				throw new ReflectiveOperationException("Could not create keybinding category.");
 			}
 		}
 
-		throw mappedFailure;
-	}
-
-	private static KeyBinding categorizedKeyBinding(String translationKey, int code, Class<?> categoryClass, Method create) throws ReflectiveOperationException {
-		create.setAccessible(true);
-		Object category = create.invoke(null, Identifier.of("flowtiers", "category"));
-		Constructor<KeyBinding> constructor = KeyBinding.class.getConstructor(String.class, InputUtil.Type.class, int.class, categoryClass);
-		return constructor.newInstance(translationKey, InputUtil.Type.KEYSYM, code, category);
+		Constructor<KeyBinding> constructor = KeyBinding.class.getConstructor(
+				String.class, InputUtil.Type.class, int.class, cachedCategory.getClass());
+		return constructor.newInstance(translationKey, InputUtil.Type.KEYSYM, code, cachedCategory);
 	}
 }

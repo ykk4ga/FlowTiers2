@@ -144,8 +144,7 @@ public final class FlowTierFormatter {
 
 	public static Text icon(String ladder) {
 		return Text.literal(String.valueOf(iconGlyph(ladder)))
-				.setStyle(FlowTierMinecraftCompat.fontStyle(Identifier.of("flowtiers", "default")))
-				.formatted(Formatting.WHITE);
+				.setStyle(Style.EMPTY.withColor(0xFFFFFF));
 	}
 
 	private static char iconGlyph(String ladder) {
