@@ -5,8 +5,6 @@ out/
 classes/
 .gradletasknamecache
 
-.examples/
-
 # local gradle overrides
 local.properties
 gradle-local.properties
@@ -35,21 +33,6 @@ bin/
 
 *.DS_Store
 ._*
-
-# fabric / minecraft runtime output
-run/
-runs/
-logs/
-crash-reports/
-saves/
-screenshots/
-resourcepacks/
-shaderpacks/
-config/
-options.txt
-servers.dat
-usercache.json
-usernamecache.json
 
 # java diagnostics
 hs_err_*.log
