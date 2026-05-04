@@ -26,7 +26,7 @@ public record FlowTierStats(UUID uuid, String name, Map<String, LadderStats> lad
 			return bestLadder();
 		}
 
-		return ladder(FlowTierClientConfig.preferredLadder).or(this::bestLadder);
+		return Optional.ofNullable(ladders.get(FlowTierClientConfig.normalizeLadder(FlowTierClientConfig.preferredLadder)));
 	}
 
 	public record LadderStats(

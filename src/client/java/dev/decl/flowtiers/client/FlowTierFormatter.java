@@ -19,8 +19,8 @@ public final class FlowTierFormatter {
 	public static Text compact(FlowTierStats stats) {
 		FlowTierStats.LadderStats ladder = stats.displayLadder().orElse(null);
 
-		if (ladder == null) {
-			return Text.literal("[Flow Unranked]").formatted(Formatting.GRAY);
+		if (ladder == null || !ladder.hasPlayedRanked()) {
+			return Text.literal("[Unranked]").formatted(Formatting.GRAY);
 		}
 
 		return decorated(ladder, true);
