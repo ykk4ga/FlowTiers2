@@ -52,25 +52,23 @@ public class NametagLayoutButtonEntry extends TooltipListEntry<Void> {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float delta) {
-        button.setX(x + entryWidth - 154);
-        button.setY(y + 1);
-        button.setWidth(150);
-        context.text(
-                Minecraft.getInstance().font,
-                Component.literal("Nametag Layout"),
-                x, y + 6, 0xFFFFFFFF, true
-        );
-        // draw button manually
-        int bx = button.getX();
-        int by = button.getY();
-        int bw = button.getWidth();
-        int bh = button.getHeight();
+        int bx = x + entryWidth - 154;
+        int by = y + 1;
+        int bw = 150;
+        int bh = 20;
+        button.setX(bx);
+        button.setY(by);
+        button.setWidth(bw);
+
+        context.text(Minecraft.getInstance().font, Component.literal("Nametag Layout"), x, y + 6, 0xFFFFFFFF, true);
+
         boolean buttonHovered = mouseX >= bx && mouseX <= bx + bw && mouseY >= by && mouseY <= by + bh;
         context.fill(bx, by, bx + bw, by + bh, buttonHovered ? 0xFF3B82F6 : 0xFF1F2937);
         context.fill(bx, by, bx + bw, by + 1, buttonHovered ? 0xFF93C5FD : 0xFF4B5563);
         context.fill(bx, by + bh - 1, bx + bw, by + bh, buttonHovered ? 0xFF93C5FD : 0xFF4B5563);
         context.fill(bx, by, bx + 1, by + bh, buttonHovered ? 0xFF93C5FD : 0xFF4B5563);
         context.fill(bx + bw - 1, by, bx + bw, by + bh, buttonHovered ? 0xFF93C5FD : 0xFF4B5563);
-        context.centeredText(Minecraft.getInstance().font, button.getMessage(), bx + bw / 2, by + (bh - Minecraft.getInstance().font.lineHeight) / 2, 0xFFFFFFFF);
+        context.centeredText(Minecraft.getInstance().font, button.getMessage(),
+                bx + bw / 2, by + (bh - Minecraft.getInstance().font.lineHeight) / 2, 0xFFFFFFFF);
     }
 }

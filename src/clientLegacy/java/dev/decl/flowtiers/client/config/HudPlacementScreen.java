@@ -33,6 +33,11 @@ final class HudPlacementScreen extends Screen {
 	}
 
 	@Override
+	public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+		// suppress default blur background
+	}
+
+	@Override
 	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
 		if (dragging) {
 			if (leftMouseReleased()) {
@@ -58,22 +63,17 @@ final class HudPlacementScreen extends Screen {
 			dragOffsetY = (int) mouseY - FlowTierClientConfig.hudY;
 			return true;
 		}
-
 		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	@Override
 	public void close() {
 		FlowTierClientConfig.save();
-		if (client != null) {
-			client.setScreen(parent);
-		}
+		if (client != null) client.setScreen(parent);
 	}
 
 	@Override
-	public boolean shouldPause() {
-		return false;
-	}
+	public boolean shouldPause() { return false; }
 
 	private void setHudPosition(int x, int y) {
 		FlowTierClientConfig.hudX = clamp(x, 0, width - previewWidth());
@@ -82,12 +82,10 @@ final class HudPlacementScreen extends Screen {
 
 	private void drawPreview(DrawContext context, int x, int y) {
 		TextRenderer renderer = textRenderer;
-		int previewWidth = previewWidth();
-		int previewHeight = previewHeight();
-
-		context.fill(x, y, x + previewWidth, y + previewHeight, 0xAA000000);
-		drawBorder(context, x, y, previewWidth, previewHeight, dragging ? 0xFF93C5FD : 0xFF3B82F6);
-
+		int pw = previewWidth();
+		int ph = previewHeight();
+		context.fill(x, y, x + pw, y + ph, 0xAA000000);
+		drawBorder(context, x, y, pw, ph, dragging ? 0xFF93C5FD : 0xFF3B82F6);
 		int tx = x + PADDING;
 		int ty = y + PADDING;
 		Text title = Text.literal("FlowTiers");
@@ -109,12 +107,12 @@ final class HudPlacementScreen extends Screen {
 
 	private int previewWidth() {
 		MinecraftClient client = MinecraftClient.getInstance();
-		TextRenderer renderer = client.textRenderer;
-		int width = renderer.getWidth("FlowTiers  ") + renderer.getWidth(FlowTierFormatter.icon("SWORD"));
-		width = Math.max(width, renderer.getWidth("Iron III  800 ELO"));
-		width = Math.max(width, renderer.getWidth("#123 Sword"));
-		width = Math.max(width, renderer.getWidth("12W 4L"));
-		return width + PADDING * 2;
+		TextRenderer r = client.textRenderer;
+		int w = r.getWidth("FlowTiers  ") + r.getWidth(FlowTierFormatter.icon("SWORD"));
+		w = Math.max(w, r.getWidth("Iron III  800 ELO"));
+		w = Math.max(w, r.getWidth("#123 Sword"));
+		w = Math.max(w, r.getWidth("12W 4L"));
+		return w + PADDING * 2;
 	}
 
 	private int previewHeight() {
@@ -123,7 +121,8 @@ final class HudPlacementScreen extends Screen {
 
 	private boolean leftMouseReleased() {
 		MinecraftClient client = MinecraftClient.getInstance();
-		return client == null || GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_RELEASE;
+		return client == null || GLFW.glfwGetMouseButton(
+				client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_RELEASE;
 	}
 
 	private static int clamp(int value, int min, int max) {

@@ -90,7 +90,6 @@ public final class FlowTierLeaderboardScreen extends Screen {
 		int bottom = height - 28;
 		int rowHeight = 16;
 
-		context.drawCenteredTextWithShadow(textRenderer, Text.literal("FlowPvP Leaderboard").append(Text.literal(" - ")).append(FlowTierFormatter.icon(ladder)).append(Text.literal(" " + FlowTierFormatter.displayName(ladder))), width / 2, 10, 0xFFFFFF);
 		context.fill(panelLeft, top - 18, panelRight, bottom, 0xAA080B12);
 		context.fill(panelLeft, top - 18, panelRight, top - 2, 0xCC111827);
 		context.drawTextWithShadow(textRenderer, "#", panelLeft + 10, top - 14, 0xFFB5C7E8);

@@ -44,44 +44,38 @@ public final class FlowTierMinecraftCompat {
 
 	public static Style fontStyle(Identifier fontId) {
 		MappingResolver mappings = FabricLoader.getInstance().getMappingResolver();
-		try {
-			String methodName = mappings.mapMethodName(
-					"named",
-					"net.minecraft.text.Style",
-					"withFont",
-					"(Lnet/minecraft/util/Identifier;)Lnet/minecraft/text/Style;"
-			);
-			Method withFont = Style.class.getMethod(methodName, Identifier.class);
-			return (Style) withFont.invoke(Style.EMPTY, fontId);
-		} catch (ReflectiveOperationException ignored) {
-		}
-
-		try {
-			Class<?> sourceClass = Class.forName(mappings.mapClassName("named", "net.minecraft.text.StyleSpriteSource"));
-			Class<?> fontClass = Class.forName(mappings.mapClassName("named", "net.minecraft.text.StyleSpriteSource$Font"));
-			Object font = fontClass.getConstructor(Identifier.class).newInstance(fontId);
-			String methodName = mappings.mapMethodName(
-					"named",
-					"net.minecraft.text.Style",
-					"withFont",
-					"(Lnet/minecraft/text/StyleSpriteSource;)Lnet/minecraft/text/Style;"
-			);
-			Method withFont = Style.class.getMethod(methodName, sourceClass);
-			return (Style) withFont.invoke(Style.EMPTY, font);
-		} catch (ReflectiveOperationException ignored) {
-		}
 
 		for (Method method : Style.class.getMethods()) {
-			if (!method.getReturnType().equals(Style.class)) continue;
+			if (!method.getReturnType().isAssignableFrom(Style.class)) continue;
 			if (method.getParameterCount() != 1) continue;
-			if (!method.getParameterTypes()[0].isAssignableFrom(fontId.getClass())) continue;
-			if (!method.getName().toLowerCase().contains("font")) continue;
+
+			Class<?> paramType = method.getParameterTypes()[0];
+
+			// 1.21.2+
+			if (paramType.isAssignableFrom(fontId.getClass())) {
+				try {
+					Object result = method.invoke(Style.EMPTY, fontId);
+					if (result instanceof Style s) return s;
+				} catch (Exception ignored) {}
+			}
+
 			try {
-				Style result = (Style) method.invoke(Style.EMPTY, fontId);
-				if (result != null) return result;
-			} catch (Exception ignored) {
+				Constructor<?> ctor = paramType.getConstructor(fontId.getClass());
+				Object wrapped = ctor.newInstance(fontId);
+				Object result = method.invoke(Style.EMPTY, wrapped);
+				if (result instanceof Style s) return s;
+			} catch (Exception ignored) {}
+
+			for (Class<?> inner : paramType.getDeclaredClasses()) {
+				try {
+					Constructor<?> ctor = inner.getConstructor(fontId.getClass());
+					Object wrapped = ctor.newInstance(fontId);
+					Object result = method.invoke(Style.EMPTY, wrapped);
+					if (result instanceof Style s) return s;
+				} catch (Exception ignored) {}
 			}
 		}
+
 		return Style.EMPTY;
 	}
 

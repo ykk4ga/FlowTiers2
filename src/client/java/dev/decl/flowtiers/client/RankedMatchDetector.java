@@ -42,8 +42,7 @@ public final class RankedMatchDetector {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc == null || mc.world == null) return false;
 
-        // 1) Sidebar scoreboard title keyword
-        // 2) Tab-list LIST slot has active objective
+        // 1) Sidebar scoreboard title keyword only
         try {
             Scoreboard sb = mc.world.getScoreboard();
             if (sb != null) {
@@ -52,11 +51,11 @@ public final class RankedMatchDetector {
                     String title = sidebar.getDisplayName().getString().toLowerCase();
                     if (isRankedKeyword(title)) return true;
                 }
-                if (getObjectiveForSlot(sb, 0, "LIST") != null) return true;
+                // Removed LIST slot check — too aggressive, triggers in lobby too
             }
         } catch (Throwable ignored) {}
 
-        // 3) Tab list header/footer keyword
+        // 2) Tab list header/footer keyword
         try {
             var hud = mc.inGameHud;
             if (hud != null && hud.getPlayerListHud() != null) {
@@ -66,7 +65,7 @@ public final class RankedMatchDetector {
             }
         } catch (Throwable ignored) {}
 
-        // 4) Scan up to 16 tab entries for ELO-prefixed names
+        // 3) Scan tab entries for ELO-prefixed names
         try {
             ClientPlayNetworkHandler net = mc.getNetworkHandler();
             if (net != null) {

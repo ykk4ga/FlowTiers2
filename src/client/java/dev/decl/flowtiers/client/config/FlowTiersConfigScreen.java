@@ -44,7 +44,7 @@ public final class FlowTiersConfigScreen {
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.nametagEnabled = value)
 				.build());
-		overlay.addEntry(entries.startBooleanToggle(Text.literal("Hide stats in ranked matches"), FlowTierClientConfig.suppressRankedDuplicates)
+		overlay.addEntry(entries.startBooleanToggle(Text.literal("Hide nametag if Ranked System"), FlowTierClientConfig.suppressRankedDuplicates)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.suppressRankedDuplicates = value)
 				.build());

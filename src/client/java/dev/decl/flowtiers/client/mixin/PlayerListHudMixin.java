@@ -21,9 +21,17 @@ public class PlayerListHudMixin {
 		if (FlowTierClientConfig.suppressRankedDuplicates && dev.decl.flowtiers.client.RankedMatchDetector.isInRankedMatch()) return;
 
 		FlowTiersClientState.cache().fetch(FlowTierMinecraftCompat.profileId(entry.getProfile()));
-		FlowTiersClientState.cache().getIfFresh(FlowTierMinecraftCompat.profileId(entry.getProfile())).ifPresent(stats ->
+		FlowTiersClientState.cache().getIfFresh(FlowTierMinecraftCompat.profileId(entry.getProfile())).ifPresent(stats -> {
+			Text suffix = FlowTierFormatter.compact(stats);
+			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
+				cir.setReturnValue(suffix.copy()
+						.append(Text.literal(" "))
+						.append(cir.getReturnValue()));
+			} else {
 				cir.setReturnValue(cir.getReturnValue().copy()
 						.append(Text.literal(" "))
-						.append(FlowTierFormatter.compact(stats))));
+						.append(suffix));
+			}
+		});
 	}
 }

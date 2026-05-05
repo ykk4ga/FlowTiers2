@@ -22,7 +22,6 @@ public final class FlowTiersConfigScreen {
 				.setTitle(Component.literal("FlowTiers"));
 		ConfigEntryBuilder entries = builder.entryBuilder();
 
-		// ── General ──────────────────────────────────────────────────────────
 		ConfigCategory general = builder.getOrCreateCategory(Component.literal("General"));
 		general.addEntry(entries.startEnumSelector(
 						Component.literal("Display mode"),
@@ -38,7 +37,28 @@ public final class FlowTiersConfigScreen {
 				.setSaveConsumer(value -> FlowTierClientConfig.preferredLadder = FlowTierClientConfig.normalizeLadder(value))
 				.build());
 
-		// ── HUD ──────────────────────────────────────────────────────────────
+		ConfigCategory overlay = builder.getOrCreateCategory(Component.literal("Nametag & Tab"));
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show nametag stats"), FlowTierClientConfig.nametagEnabled)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.nametagEnabled = value)
+				.build());
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show tab list stats"), FlowTierClientConfig.tabListEnabled)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.tabListEnabled = value)
+				.build());
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Hide nametag if Ranked System"), FlowTierClientConfig.suppressRankedDuplicates)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.suppressRankedDuplicates = value)
+				.build());
+		overlay.addEntry(entries.startEnumSelector(
+						Component.literal("Stats position"),
+						FlowTierClientConfig.NametagAlignment.class,
+						FlowTierClientConfig.nametagAlignment)
+				.setDefaultValue(FlowTierClientConfig.NametagAlignment.LEFT)
+				.setSaveConsumer(value -> FlowTierClientConfig.nametagAlignment = value)
+				.build());
+		overlay.addEntry(new NametagLayoutButtonEntry(parent));
+
 		ConfigCategory hud = builder.getOrCreateCategory(Component.literal("HUD"));
 		hud.addEntry(entries.startBooleanToggle(Component.literal("Show HUD"), FlowTierClientConfig.hudEnabled)
 				.setDefaultValue(true)
@@ -57,29 +77,6 @@ public final class FlowTiersConfigScreen {
 				.setDefaultValue(false)
 				.setSaveConsumer(value -> FlowTierClientConfig.hudStreakEnabled = value)
 				.build());
-
-		// ── Nametag & Tab ─────────────────────────────────────────────────────
-		ConfigCategory overlay = builder.getOrCreateCategory(Component.literal("Nametag & Tab"));
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show nametag stats"), FlowTierClientConfig.nametagEnabled)
-				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.nametagEnabled = value)
-				.build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show tab list stats"), FlowTierClientConfig.tabListEnabled)
-				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.tabListEnabled = value)
-				.build());
-		overlay.addEntry(entries.startBooleanToggle(Component.literal("Hide stats in ranked matches"), FlowTierClientConfig.suppressRankedDuplicates)
-				.setDefaultValue(true)
-				.setSaveConsumer(value -> FlowTierClientConfig.suppressRankedDuplicates = value)
-				.build());
-		overlay.addEntry(entries.startEnumSelector(
-						Component.literal("Stats position"),
-						FlowTierClientConfig.NametagAlignment.class,
-						FlowTierClientConfig.nametagAlignment)
-				.setDefaultValue(FlowTierClientConfig.NametagAlignment.LEFT)
-				.setSaveConsumer(value -> FlowTierClientConfig.nametagAlignment = value)
-				.build());
-		overlay.addEntry(new NametagLayoutButtonEntry(parent));
 
 		builder.setSavingRunnable(FlowTierClientConfig::save);
 		return builder.build();
