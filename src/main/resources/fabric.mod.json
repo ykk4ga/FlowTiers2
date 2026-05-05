@@ -1,39 +1,43 @@
 {
-	"schemaVersion": 1,
-	"id": "flowtiers",
-	"version": "${version}",
-	"name": "FlowTiers",
-	"description": "Client-side FlowPvP ranked stats on commands, HUD, nametags, and the tab list.",
-	"authors": [
-		"decl",
-        "micahcode"
-	],
-	"license": "CC0-1.0",
-	"icon": "assets/flowtiers/icon.png",
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"dev.decl.flowtiers.FlowTiers"
-		],
-		"client": [
-			"dev.decl.flowtiers.client.FlowTiersClient"
-		],
-		"modmenu": [
-			"dev.decl.flowtiers.client.config.FlowTiersModMenu"
-		]
-	},
-	"mixins": [
-		{
-			"config": "flowtiers.client.mixins.json",
-			"environment": "client"
-		}
-	],
-	"depends": {
-		"fabricloader": ">=0.17.2",
-		"minecraft": "${minecraft_dependency}",
-		"java": "${java_dependency}",
-		"fabric-api": "*",
-		"cloth-config": "*",
-		"modmenu": "*"
-	}
+  "schemaVersion": 1,
+  "id": "flowtiers",
+  "version": "${version}",
+  "name": "FlowTiers",
+  "description": "Client-side FlowPvP ranked stats on commands, HUD, nametags, and the tab list.",
+  "authors": [
+    "decl",
+    "micahcode"
+  ],
+  "contact": {
+    "homepage": "https://flowpvp.gg/",
+    "issues": "https://github.com/ykk4ga/FlowTiers2/issues"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/flowtiers/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.decl.flowtiers.FlowTiers"
+    ],
+    "client": [
+      "dev.decl.flowtiers.client.FlowTiersClient"
+    ],
+    "modmenu": [
+      "dev.decl.flowtiers.client.config.FlowTiersModMenu"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "flowtiers.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "${minecraft_dependency}",
+    "java": "${java_dependency}",
+    "fabric-api": "*",
+    "cloth-config": "*",
+    "modmenu": "*"
+  }
 }
