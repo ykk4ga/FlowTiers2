@@ -7,10 +7,6 @@
 	"authors": [
 		"decl"
 	],
-	"contact": {
-		"homepage": "https://flowpvp.gg/",
-		"sources": "https://flowpvp.gg/api"
-	},
 	"license": "CC0-1.0",
 	"icon": "assets/flowtiers/icon.png",
 	"environment": "*",
@@ -36,9 +32,7 @@
 		"minecraft": "${minecraft_dependency}",
 		"java": "${java_dependency}",
 		"fabric-api": "*",
-		"cloth-config": "*"
-	},
-	"suggests": {
+		"cloth-config": "*",
 		"modmenu": "*"
 	}
 }
