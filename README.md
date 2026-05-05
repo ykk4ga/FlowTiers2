@@ -1,14 +1,52 @@
-# FlowTiers Multi-Version Builds
+# FlowTiers
 
-FlowTiers builds one Fabric jar per Minecraft target. The target is selected with the Gradle property `target_mc`.
+FlowTiers is a client-side Fabric mod that shows FlowPvP ranked stats in-game. It can display a player's tier, ELO, leaderboard position, and ladder icon through a command, HUD overlay, nametags, the tab list, and an in-game leaderboard screen.
+
+Stats are fetched from the public FlowPvP API at `https://flowpvp.gg/api`.
+
+## Features
+
+- `/flowtiers <player>` command with username to UUID lookup
+- Compact configurable HUD for your own FlowPvP stats
+- Nametag and tab list stat overlays
+- FlowPvP leaderboard screen with ladder switching, search, and player profiles
+- Highest-tier and global display modes
+- Custom ladder icons
+- Mod Menu + Cloth Config integration
+- Draggable HUD placement screen
+- Multi-version Fabric builds for Minecraft `1.21` through `1.21.11` and `26.1` through `26.1.2`
 
 ## Requirements
 
-- Java 21 is required for the `1.21.x` targets.
-- Java 25 is required for the `26.1.x` targets.
-- On Windows, run commands from the project root
+- Fabric Loader `0.17.2` or newer
+- Fabric API
+- Cloth Config
+- Mod Menu
 
-## Build Commands
+Java requirements depend on the target Minecraft version:
+
+| Minecraft target | Java |
+| --- | --- |
+| `1.21.x` | Java 21 |
+| `26.1.x` | Java 25 |
+
+## Installation
+
+1. Build or download the jar for your Minecraft version.
+2. Put the matching FlowTiers jar in your `mods` folder.
+3. Install Fabric API, Cloth Config, and Mod Menu for the same Minecraft version.
+4. Launch Minecraft with Fabric.
+
+Use the jar whose `+mc...` suffix matches the Minecraft version you are launching.
+
+```text
+flowtiers-1.0.0+mc1.21.11.jar
+flowtiers-1.0.0+mc26.1.2.jar
+```
+
+## Building
+
+Run commands from the project root.
 
 Build the default target from `gradle.properties`:
 
@@ -23,88 +61,47 @@ Build one specific target:
 .\gradlew.bat build "-Ptarget_mc=26.1.2"
 ```
 
-Build every configured target:
+Build every configured Minecraft target:
 
 ```powershell
 .\gradlew.bat buildAllMcVersions
 ```
 
-If you are using PowerShell, keep the `"-Ptarget_mc=..."` argument quoted.
+PowerShell users should keep the `"-Ptarget_mc=..."` argument quoted.
 
-## Output
-
-Jars are written to `build/libs`.
-
-Example:
+Build outputs are written to:
 
 ```text
-build/libs/flowtiers-1.0.0+mc1.21.11.jar
-build/libs/flowtiers-1.0.0+mc26.1.2.jar
+build/libs
 ```
 
-Use the jar whose `+mc...` suffix matches the Minecraft version you are launching.
+## Supported Versions
 
-## Supported Targets
+Configured build targets:
 
-Configured targets:
+| Minecraft | Status |
+| --- | --- |
+| `1.21` | Supported |
+| `1.21.1` | Supported |
+| `1.21.2` | Supported |
+| `1.21.3` | Supported |
+| `1.21.4` | Supported |
+| `1.21.5` | Supported |
+| `1.21.6` | Supported |
+| `1.21.7` | Supported |
+| `1.21.8` | Supported |
+| `1.21.9` | Supported |
+| `1.21.10` | Supported |
+| `1.21.11` | Supported |
+| `26.1` | Supported |
+| `26.1.1` | Supported |
+| `26.1.2` | Supported |
 
-- `1.21`
-- `1.21.1`
-- `1.21.2`
-- `1.21.3`
-- `1.21.4`
-- `1.21.5`
-- `1.21.6`
-- `1.21.7`
-- `1.21.8`
-- `1.21.9`
-- `1.21.10`
-- `1.21.11`
-- `26.1`
-- `26.1.1`
-- `26.1.2`
+The full configured matrix is intended to build with `buildAllMcVersions`. Runtime testing is still recommended when updating Minecraft, Fabric Loader, or Fabric API versions because mixins depend on client internals.
 
-## Current Feature Status
+## Project Structure
 
-`1.21` through `1.21.11` include the command, HUD, nametag stats, tab list stats, Mod Menu/Cloth Config, HUD placement, and leaderboard/player stats screens.
-
-`26.1`, `26.1.1`, and `26.1.2` build from `src/client26/java` and include:
-
-- `/flowtiers` command
-- FlowPvP API/cache/stats logic
-- compact HUD
-- `L` leaderboard keybind
-- Mod Menu and Cloth Config screen
-- draggable HUD placement screen
-- polished leaderboard tabs/search/player profile screen
-- tab list stats mixin
-- nametag stats mixin
-- custom icon font styling
-
-The full configured matrix builds successfully with `buildAllMcVersions`. Runtime testing is still recommended for 26.x mixin behavior because Mojang's 26.x client internals are separate from the 1.21 Yarn-mapped path.
-
-## How The Build Is Split
-
-`1.21.x` targets use Yarn mappings and the `fabric-loom-remap` plugin.
-
-`26.1.x` targets use the 26.x no-mappings/unobfuscated build path and the normal `fabric-loom` plugin. These targets use Java 25 and separate client source code in `src/client26/java`.
-
-The version matrix and dependency pins live in:
-
-```text
-gradle/versions.gradle
-```
-
-## Useful Checks
-
-Quick check for the newest 1.21 target:
-
-```powershell
-.\gradlew.bat build "-Ptarget_mc=1.21.11"
-```
-
-Quick check for the newest 26 target:
-
-```powershell
-.\gradlew.bat build "-Ptarget_mc=26.1.2"
-```
+- `src/main` contains shared mod metadata and common entrypoint code.
+- `src/client`, `src/clientLegacy`, and `src/clientModern` contain the 1.21 client implementation.
+- `src/client26` contains the 26.x client implementation.
+- `gradle/versions.gradle` contains the Minecraft version matrix and dependency pins.
