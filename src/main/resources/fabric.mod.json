@@ -5,7 +5,8 @@
 	"name": "FlowTiers",
 	"description": "Client-side FlowPvP ranked stats on commands, HUD, nametags, and the tab list.",
 	"authors": [
-		"decl"
+		"decl",
+        "micahcode"
 	],
 	"license": "CC0-1.0",
 	"icon": "assets/flowtiers/icon.png",
