@@ -12,5 +12,18 @@ public class FlowTiersClient implements ClientModInitializer {
 		FlowTierHud.register(cache);
 		FlowTierKeybinds.register();
 		FlowTiers.LOGGER.info("FlowTiers 26.x client foundation initialized.");
+
+		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+			if (message.getString().contains("SR Change")) {
+				Minecraft client = Minecraft.getInstance();
+				if (client.player != null) {
+					UUID uuid = client.player.getUUID();
+					CompletableFuture.delayedExecutor(15, TimeUnit.SECONDS)
+							.execute(() -> { cache.invalidate(uuid); cache.fetch(uuid); });
+					CompletableFuture.delayedExecutor(30, TimeUnit.SECONDS)
+							.execute(() -> { cache.invalidate(uuid); cache.fetch(uuid); });
+				}
+			}
+		});
 	}
 }

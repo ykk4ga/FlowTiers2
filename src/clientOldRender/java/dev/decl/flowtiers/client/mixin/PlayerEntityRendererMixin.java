@@ -19,10 +19,16 @@ public class PlayerEntityRendererMixin {
 
 	private static final ThreadLocal<Boolean> RENDERING = ThreadLocal.withInitial(() -> false);
 
-	@Inject(method = "renderLabelIfPresent(Lnet/minecraft/client/network/AbstractClientPlayerEntity;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IF)V", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "renderLabelIfPresent(...)", at = @At("HEAD"), cancellable = true)
 	private void flowtiers$appendNametagStats(AbstractClientPlayerEntity player, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, float tickDelta, CallbackInfo ci) {
 		if (!FlowTierClientConfig.nametagEnabled) return;
-		if (RENDERING.get()) return; // prevent recursion
+		if (RENDERING.get()) return;
+
+		if (FlowTierClientConfig.suppressRankedDuplicates) {
+			String rawName = text.getString();
+			if (rawName != null && rawName.matches("^\\d{2,5}[\\s|].*")) return;
+			if (RankedMatchDetector.nameAlreadyHasTierInfo(text)) return;
+		}
 
 		FlowTiersClientState.cache().fetch(player.getUuid());
 		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {

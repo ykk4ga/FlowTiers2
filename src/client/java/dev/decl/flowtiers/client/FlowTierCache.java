@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import dev.decl.flowtiers.FlowTiers;
 
 public final class FlowTierCache {
-	private static final Duration CACHE_TTL = Duration.ofMinutes(10);
+	private static final Duration CACHE_TTL = Duration.ofMinutes(5);
 	private static final Duration FAILED_TTL = Duration.ofMinutes(1);
 
 	private final FlowTierApiClient apiClient = new FlowTierApiClient();
@@ -22,7 +22,6 @@ public final class FlowTierCache {
 		if (entry == null || entry.isExpired()) {
 			return Optional.empty();
 		}
-
 		return Optional.ofNullable(entry.stats());
 	}
 
@@ -43,6 +42,10 @@ public final class FlowTierCache {
 				return null;
 			}
 		}).whenComplete((stats, throwable) -> inFlight.remove(key)));
+	}
+
+	public void invalidate(UUID uuid) {
+		cache.remove(uuid);
 	}
 
 	private record CacheEntry(FlowTierStats stats, long fetchedAt, Duration ttl) {

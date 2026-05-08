@@ -7,8 +7,6 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.text.Text;
 
-
-// todo: Fix this (does not work)
 public final class RankedMatchDetector {
 
     private static final long CACHE_MS = 2000L;
@@ -21,6 +19,7 @@ public final class RankedMatchDetector {
         long now = System.currentTimeMillis();
         if (now - cachedAt < CACHE_MS) return cachedResult;
         boolean result = detect();
+        dev.decl.flowtiers.FlowTiers.LOGGER.info("[RankedDetector] result={}", result);
         cachedResult = result;
         cachedAt = now;
         return result;
@@ -34,7 +33,7 @@ public final class RankedMatchDetector {
         if (stripped.isEmpty()) return false;
         String lower = stripped.toLowerCase();
         if (lower.contains("elo")) return true;
-        if (stripped.matches("^\\d{2,5}[\\s|·•].*[A-Za-z_].*")) return true;
+        if (stripped.matches("^\\d{2,5}\\D.*")) return true;
         return false;
     }
 
@@ -42,30 +41,31 @@ public final class RankedMatchDetector {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc == null || mc.world == null) return false;
 
-        // 1) Sidebar scoreboard title keyword only
         try {
             Scoreboard sb = mc.world.getScoreboard();
             if (sb != null) {
                 ScoreboardObjective sidebar = getObjectiveForSlot(sb, 1, "SIDEBAR");
                 if (sidebar != null) {
                     String title = sidebar.getDisplayName().getString().toLowerCase();
+                    dev.decl.flowtiers.FlowTiers.LOGGER.info("[RankedDetector] sidebar: '{}'", title);
                     if (isRankedKeyword(title)) return true;
                 }
-                // Removed LIST slot check — too aggressive, triggers in lobby too
+                ScoreboardObjective list = getObjectiveForSlot(sb, 0, "LIST");
+                dev.decl.flowtiers.FlowTiers.LOGGER.info("[RankedDetector] LIST slot: {}", list != null ? list.getName() : "null");
+                if (list != null) return true;
             }
         } catch (Throwable ignored) {}
 
-        // 2) Tab list header/footer keyword
         try {
             var hud = mc.inGameHud;
             if (hud != null && hud.getPlayerListHud() != null) {
                 Text header = getField(hud.getPlayerListHud(), "header", "field_2153");
                 Text footer = getField(hud.getPlayerListHud(), "footer", "field_2152");
+                if (header != null) dev.decl.flowtiers.FlowTiers.LOGGER.info("[RankedDetector] header: '{}'", header.getString());
                 if (textContainsRankedHint(header) || textContainsRankedHint(footer)) return true;
             }
         } catch (Throwable ignored) {}
 
-        // 3) Scan tab entries for ELO-prefixed names
         try {
             ClientPlayNetworkHandler net = mc.getNetworkHandler();
             if (net != null) {
@@ -73,7 +73,11 @@ public final class RankedMatchDetector {
                 for (PlayerListEntry e : net.getPlayerList()) {
                     if (e == null) continue;
                     Text disp = e.getDisplayName();
-                    if (disp != null && nameAlreadyHasTierInfo(disp)) return true;
+                    if (disp != null) {
+                        String stripped = stripFormatCodes(disp.getString()).trim();
+                        dev.decl.flowtiers.FlowTiers.LOGGER.info("[RankedDetector] tab: '{}'", stripped);
+                        if (nameAlreadyHasTierInfo(disp)) return true;
+                    }
                     if (++checked >= 16) break;
                 }
             }

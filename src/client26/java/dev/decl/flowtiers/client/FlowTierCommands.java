@@ -32,6 +32,20 @@ public final class FlowTierCommands {
 						.then(ClientCommands.literal("ladder")
 								.then(ClientCommands.argument("ladder", StringArgumentType.word())
 										.executes(context -> setLadder(context.getSource(), StringArgumentType.getString(context, "ladder")))))
+						.then(ClientCommands.literal("refresh")
+								.executes(context -> {
+									FabricClientCommandSource source = context.getSource();
+									Minecraft client = Minecraft.getInstance();
+									if (client.player == null) {
+										source.sendError(Component.literal("You need to be in-game."));
+										return 0;
+									}
+									UUID uuid = client.player.getUUID();
+									cache.invalidate(uuid);
+									cache.fetch(uuid);
+									source.sendFeedback(Component.literal("FlowTiers cache refreshed.").withStyle(ChatFormatting.GREEN));
+									return 1;
+								}))
 		));
 	}
 
