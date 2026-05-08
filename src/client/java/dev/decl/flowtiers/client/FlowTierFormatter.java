@@ -27,7 +27,13 @@ public final class FlowTierFormatter {
 	}
 
 	public static Text previewCompact() {
-		// fake ladder stats for preview
+		net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
+		if (client != null && client.player != null) {
+			dev.decl.flowtiers.client.FlowTierStats real =
+					dev.decl.flowtiers.client.FlowTiersClientState.cache()
+							.getIfFresh(client.player.getUuid()).orElse(null);
+			if (real != null) return compact(real);
+		}
 		FlowTierStats.LadderStats fake = new FlowTierStats.LadderStats(
 				FlowTierClientConfig.preferredLadder,
 				800, 10, 5, 2, 10, "IRON_III", 123
@@ -103,13 +109,17 @@ public final class FlowTierFormatter {
 				case TIER -> {
 					if (!FlowTierClientConfig.tierEnabled) continue;
 					if (wrotePart) text.append(Text.literal(" "));
-					text.append(Text.literal(tierLabel(ladder)).formatted(Formatting.GOLD));
+					if (FlowTierClientConfig.coloredTier) {
+						text.append(Text.literal(tierLabel(ladder)).setStyle(Style.EMPTY.withColor(tierColor(ladder.tierLabel(), ladder.position()))));
+					} else {
+						text.append(Text.literal(tierLabel(ladder)).formatted(Formatting.WHITE));
+					}
 					wrotePart = true;
 				}
 				case ELO -> {
 					if (!FlowTierClientConfig.eloEnabled) continue;
 					if (wrotePart) text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
-					Style eloStyle = Style.EMPTY.withColor(FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0x55FF55);
+					Style eloStyle = Style.EMPTY.withColor(FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0xFFFFFF);
 					text.append(Text.literal(Integer.toString(ladder.totalRating())).setStyle(eloStyle));
 					if (FlowTierClientConfig.eloLabelEnabled)
 						text.append(Text.literal(" ELO").setStyle(eloStyle));
@@ -118,9 +128,10 @@ public final class FlowTierFormatter {
 				case POSITION -> {
 					if (!FlowTierClientConfig.positionEnabled || !ladder.hasPosition()) continue;
 					if (wrotePart) text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
+					int posColor = FlowTierClientConfig.coloredPosition ? positionColor(ladder.tierLabel(), ladder.position()) : 0xFFFFFF;
 					if (FlowTierClientConfig.positionLabelEnabled)
-						text.append(Text.literal("#").formatted(Formatting.GRAY));
-					text.append(Text.literal(Integer.toString(ladder.position())).formatted(Formatting.WHITE));
+						text.append(Text.literal("#").setStyle(Style.EMPTY.withColor(posColor)));
+					text.append(Text.literal(Integer.toString(ladder.position())).setStyle(Style.EMPTY.withColor(posColor)));
 					wrotePart = true;
 				}
 			}
@@ -219,5 +230,28 @@ public final class FlowTierFormatter {
 				.filter(FlowTierStats.LadderStats::hasPlayedRanked)
 				.filter(ladder -> !ladder.ladder().equals("GLOBAL"))
 				.max(Comparator.comparingInt(FlowTierStats.LadderStats::totalRating));
+	}
+
+	private static int tierColor(String tier, int position) {
+		if (position == 1 || tier.equals("Grandmaster")) return 0xFF55FF;
+		if (tier.startsWith("Netherite")) return 0x8B5CF6;
+		if (tier.startsWith("Diamond")) return 0x55FFFF;
+		if (tier.startsWith("Emerald")) return 0x50C878;
+		if (tier.startsWith("Gold")) return 0xFFD700;
+		if (tier.startsWith("Iron")) return 0xC0C0C0;
+		if (tier.startsWith("Copper")) return 0xCD7F32;
+		if (tier.startsWith("Coal")) return 0x555555;
+		return 0xFFFFFF;
+	}
+
+	private static int positionColor(String tier, int position) {
+		if (position == 1 || tier.equals("Grandmaster")) return 0xFF55FF;
+		if (tier.startsWith("Netherite")) return 0x8B5CF6;
+		if (tier.startsWith("Diamond")) return 0x55FFFF;
+		if (tier.startsWith("Emerald")) return 0x50C878;
+		if (tier.startsWith("Gold")) return 0xFFD700;
+		if (tier.startsWith("Iron")) return 0xC0C0C0;
+		if (tier.startsWith("Copper")) return 0xCD7F32;
+		return 0xFFFFFF;
 	}
 }

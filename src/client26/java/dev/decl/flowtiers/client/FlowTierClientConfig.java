@@ -31,6 +31,8 @@ public final class FlowTierClientConfig {
 	public static boolean eloEnabled = true;
 	public static boolean eloLabelEnabled = false;
 	public static boolean coloredElo = true;
+	public static boolean coloredTier = true;
+	public static boolean coloredPosition = true;
 	public static boolean positionEnabled = false;
 	public static boolean positionLabelEnabled = false;
 	public static int hudX = 7;
@@ -39,7 +41,7 @@ public final class FlowTierClientConfig {
 	public static boolean hudRecordEnabled = true;
 	public static boolean hudStreakEnabled = false;
 	public static NametagAlignment nametagAlignment = NametagAlignment.LEFT;
-	public static boolean suppressRankedDuplicates = true;
+	public static boolean suppressRankedDuplicates = false;
 	public static List<NametagComponent> nametagOrder = defaultNametagOrder();
 
 	private FlowTierClientConfig() {}
@@ -77,6 +79,8 @@ public final class FlowTierClientConfig {
 			eloEnabled = data.eloEnabled;
 			eloLabelEnabled = data.eloLabelEnabled;
 			coloredElo = data.coloredElo;
+			coloredTier = data.coloredTier;
+			coloredPosition = data.coloredPosition;
 			positionEnabled = data.positionEnabled;
 			positionLabelEnabled = data.positionLabelEnabled;
 			hudX = Math.max(0, data.hudX);
@@ -146,6 +150,8 @@ public final class FlowTierClientConfig {
 		boolean eloEnabled = true;
 		boolean eloLabelEnabled = false;
 		boolean coloredElo = true;
+		boolean coloredTier = true;
+		boolean coloredPosition = true;
 		boolean positionEnabled = false;
 		boolean positionLabelEnabled = false;
 		int hudX = 7;
@@ -154,7 +160,7 @@ public final class FlowTierClientConfig {
 		boolean hudRecordEnabled = true;
 		boolean hudStreakEnabled = false;
 		String nametagAlignment = NametagAlignment.LEFT.name();
-		boolean suppressRankedDuplicates = true;
+		boolean suppressRankedDuplicates = false;
 		List<String> nametagOrder = null;
 
 		static Data fromCurrent() {
@@ -171,6 +177,8 @@ public final class FlowTierClientConfig {
 			data.eloEnabled = FlowTierClientConfig.eloEnabled;
 			data.eloLabelEnabled = FlowTierClientConfig.eloLabelEnabled;
 			data.coloredElo = FlowTierClientConfig.coloredElo;
+			data.coloredTier = FlowTierClientConfig.coloredTier;
+			data.coloredPosition = FlowTierClientConfig.coloredPosition;
 			data.positionEnabled = FlowTierClientConfig.positionEnabled;
 			data.positionLabelEnabled = FlowTierClientConfig.positionLabelEnabled;
 			data.hudX = FlowTierClientConfig.hudX;

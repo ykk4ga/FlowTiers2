@@ -40,6 +40,7 @@ public final class FlowTiersConfigScreen {
 				.build());
 
 		ConfigCategory overlay = builder.getOrCreateCategory(Text.literal("Nametag & Tab"));
+		overlay.addEntry(new NametagLayoutButtonEntry(parent));
 		overlay.addEntry(entries.startBooleanToggle(Text.literal("Show nametag stats"), FlowTierClientConfig.nametagEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.nametagEnabled = value)
@@ -59,14 +60,25 @@ public final class FlowTiersConfigScreen {
 				.setDefaultValue(FlowTierClientConfig.NametagAlignment.LEFT)
 				.setSaveConsumer(value -> FlowTierClientConfig.nametagAlignment = value)
 				.build());
-		overlay.addEntry(new NametagLayoutButtonEntry(parent));
+		overlay.addEntry(entries.startBooleanToggle(Text.literal("Colored tier in nametag"), FlowTierClientConfig.coloredTier)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.coloredTier = value)
+				.build());
+		overlay.addEntry(entries.startBooleanToggle(Text.literal("Colored ELO in nametag"), FlowTierClientConfig.coloredElo)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.coloredElo = value)
+				.build());
+		overlay.addEntry(entries.startBooleanToggle(Text.literal("Colored position in nametag"), FlowTierClientConfig.coloredPosition)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.coloredPosition = value)
+				.build());
 
 		ConfigCategory hud = builder.getOrCreateCategory(Text.literal("HUD"));
+		hud.addEntry(new HudPlacementEntry());
 		hud.addEntry(entries.startBooleanToggle(Text.literal("Show HUD"), FlowTierClientConfig.hudEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.hudEnabled = value)
 				.build());
-		hud.addEntry(new HudPlacementEntry());
 		hud.addEntry(entries.startBooleanToggle(Text.literal("HUD background"), FlowTierClientConfig.hudBackground)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.hudBackground = value)

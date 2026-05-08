@@ -8,7 +8,7 @@ import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.text.Text;
 
 
-// does not work IDK why
+// todo: Fix this (does not work)
 public final class RankedMatchDetector {
 
     private static final long CACHE_MS = 2000L;

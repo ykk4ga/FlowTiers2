@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.FontDescription;
 import net.minecraft.resources.Identifier;
+import net.minecraft.client.Minecraft;
 
 public final class FlowTierFormatter {
 	private FlowTierFormatter() {}
@@ -24,6 +25,12 @@ public final class FlowTierFormatter {
 	}
 
 	public static Component previewCompact() {
+		Minecraft client = Minecraft.getInstance();
+		if (client != null && client.player != null) {
+			FlowTierStats real = FlowTiersClientState.cache()
+					.getIfFresh(client.player.getUUID()).orElse(null);
+			if (real != null) return compact(real);
+		}
 		FlowTierStats.LadderStats fake = new FlowTierStats.LadderStats(
 				FlowTierClientConfig.preferredLadder,
 				800, 10, 5, 2, 10, "IRON_III", 123
@@ -83,14 +90,17 @@ public final class FlowTierFormatter {
 				case TIER -> {
 					if (!FlowTierClientConfig.tierEnabled) continue;
 					if (wrotePart) text.append(Component.literal(" "));
-					text.append(Component.literal(tierLabel(ladder)).withStyle(ChatFormatting.GOLD));
+					if (FlowTierClientConfig.coloredTier) {
+						text.append(Component.literal(tierLabel(ladder)).withStyle(s -> s.withColor(tierColor(ladder.tierLabel(), ladder.position()))));
+					} else {
+						text.append(Component.literal(tierLabel(ladder)).withStyle(ChatFormatting.WHITE));
+					}
 					wrotePart = true;
 				}
 				case ELO -> {
 					if (!FlowTierClientConfig.eloEnabled) continue;
 					if (wrotePart) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
-					int color = FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0x55FF55;
-					text.append(Component.literal(Integer.toString(ladder.totalRating())).withStyle(s -> s.withColor(color)));
+					int color = FlowTierClientConfig.coloredElo ? eloColor(ladder.totalRating()) : 0xFFFFFF;					text.append(Component.literal(Integer.toString(ladder.totalRating())).withStyle(s -> s.withColor(color)));
 					if (FlowTierClientConfig.eloLabelEnabled)
 						text.append(Component.literal(" ELO").withStyle(s -> s.withColor(color)));
 					wrotePart = true;
@@ -98,9 +108,10 @@ public final class FlowTierFormatter {
 				case POSITION -> {
 					if (!FlowTierClientConfig.positionEnabled || !ladder.hasPosition()) continue;
 					if (wrotePart) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+					int posColor = FlowTierClientConfig.coloredPosition ? positionColor(ladder.tierLabel(), ladder.position()) : 0xFFFFFF;
 					if (FlowTierClientConfig.positionLabelEnabled)
-						text.append(Component.literal("#").withStyle(ChatFormatting.GRAY));
-					text.append(Component.literal(Integer.toString(ladder.position())).withStyle(ChatFormatting.WHITE));
+						text.append(Component.literal("#").withStyle(s -> s.withColor(posColor)));
+					text.append(Component.literal(Integer.toString(ladder.position())).withStyle(s -> s.withColor(posColor)));
 					wrotePart = true;
 				}
 			}
@@ -179,5 +190,27 @@ public final class FlowTierFormatter {
 				.filter(FlowTierStats.LadderStats::hasPlayedRanked)
 				.filter(ladder -> !ladder.ladder().equals("GLOBAL"))
 				.max(Comparator.comparingInt(FlowTierStats.LadderStats::totalRating));
+	}
+
+	private static int tierColor(String tier, int position) {
+		if (position == 1 || tier.equals("Grandmaster")) return 0xFF55FF;
+		if (tier.startsWith("Netherite")) return 0x8B5CF6;
+		if (tier.startsWith("Diamond")) return 0x55FFFF;
+		if (tier.startsWith("Emerald")) return 0x50C878;
+		if (tier.startsWith("Gold")) return 0xFFD700;
+		if (tier.startsWith("Iron")) return 0xC0C0C0;
+		if (tier.startsWith("Copper")) return 0xCD7F32;
+		return 0xFFFFFF;
+	}
+
+	private static int positionColor(String tier, int position) {
+		if (position == 1 || tier.equals("Grandmaster")) return 0xFF55FF;
+		if (tier.startsWith("Netherite")) return 0x8B5CF6;
+		if (tier.startsWith("Diamond")) return 0x55FFFF;
+		if (tier.startsWith("Emerald")) return 0x50C878;
+		if (tier.startsWith("Gold")) return 0xFFD700;
+		if (tier.startsWith("Iron")) return 0xC0C0C0;
+		if (tier.startsWith("Copper")) return 0xCD7F32;
+		return 0xFFFFFF;
 	}
 }

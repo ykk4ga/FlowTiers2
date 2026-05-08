@@ -40,6 +40,8 @@ public final class FlowTierClientConfig {
 	public static boolean hudRecordEnabled = true;
 	public static boolean hudStreakEnabled = false;
 	public static boolean suppressRankedDuplicates = true;
+	public static boolean coloredTier = true;
+	public static boolean coloredPosition = true;
 	public static List<NametagComponent> nametagOrder = defaultNametagOrder();
 
 	private FlowTierClientConfig() {}
@@ -73,6 +75,8 @@ public final class FlowTierClientConfig {
 				gamemodeIconEnabled = false;
 				tierEnabled = false;
 			}
+			coloredTier = data.coloredTier;
+			coloredPosition = data.coloredPosition;
 			shortTierNames = data.shortTierNames;
 			eloEnabled = data.eloEnabled;
 			eloLabelEnabled = data.eloLabelEnabled;
@@ -164,6 +168,8 @@ public final class FlowTierClientConfig {
 		String nametagAlignment = NametagAlignment.LEFT.name();
 		List<String> nametagOrder = null;
 		boolean suppressRankedDuplicates = true;
+		boolean coloredTier = true;
+		boolean coloredPosition = false;
 
 		static Data fromCurrent() {
 			Data data = new Data();
@@ -190,6 +196,8 @@ public final class FlowTierClientConfig {
 			data.nametagOrder = FlowTierClientConfig.nametagOrder.stream()
 					.map(Enum::name).collect(Collectors.toList());
 			data.suppressRankedDuplicates = FlowTierClientConfig.suppressRankedDuplicates;
+			data.coloredTier = FlowTierClientConfig.coloredTier;
+			data.coloredPosition = FlowTierClientConfig.coloredPosition;
 			return data;
 		}
 	}

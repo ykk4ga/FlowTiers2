@@ -5,7 +5,7 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 
-// does not work todo: fix this
+// todo: fix this here too (no idea why it does not work)
 public final class RankedMatchDetector {
     private static final long CACHE_MS = 2000L;
     private static volatile boolean cachedResult = false;

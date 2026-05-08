@@ -38,6 +38,7 @@ public final class FlowTiersConfigScreen {
 				.build());
 
 		ConfigCategory overlay = builder.getOrCreateCategory(Component.literal("Nametag & Tab"));
+		overlay.addEntry(new NametagLayoutButtonEntry(parent));
 		overlay.addEntry(entries.startBooleanToggle(Component.literal("Show nametag stats"), FlowTierClientConfig.nametagEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.nametagEnabled = value)
@@ -47,7 +48,7 @@ public final class FlowTiersConfigScreen {
 				.setSaveConsumer(value -> FlowTierClientConfig.tabListEnabled = value)
 				.build());
 		overlay.addEntry(entries.startBooleanToggle(Component.literal("Hide nametag if Ranked System"), FlowTierClientConfig.suppressRankedDuplicates)
-				.setDefaultValue(true)
+				.setDefaultValue(false)
 				.setSaveConsumer(value -> FlowTierClientConfig.suppressRankedDuplicates = value)
 				.build());
 		overlay.addEntry(entries.startEnumSelector(
@@ -57,14 +58,25 @@ public final class FlowTiersConfigScreen {
 				.setDefaultValue(FlowTierClientConfig.NametagAlignment.LEFT)
 				.setSaveConsumer(value -> FlowTierClientConfig.nametagAlignment = value)
 				.build());
-		overlay.addEntry(new NametagLayoutButtonEntry(parent));
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Colored tier"), FlowTierClientConfig.coloredTier)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.coloredTier = value)
+				.build());
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Colored ELO"), FlowTierClientConfig.coloredElo)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.coloredElo = value)
+				.build());
+		overlay.addEntry(entries.startBooleanToggle(Component.literal("Colored position"), FlowTierClientConfig.coloredPosition)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.coloredPosition = value)
+				.build());
 
 		ConfigCategory hud = builder.getOrCreateCategory(Component.literal("HUD"));
+		hud.addEntry(new HudPlacementEntry());
 		hud.addEntry(entries.startBooleanToggle(Component.literal("Show HUD"), FlowTierClientConfig.hudEnabled)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.hudEnabled = value)
 				.build());
-		hud.addEntry(new HudPlacementEntry());
 		hud.addEntry(entries.startBooleanToggle(Component.literal("HUD background"), FlowTierClientConfig.hudBackground)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.hudBackground = value)

@@ -1,7 +1,6 @@
 package dev.decl.flowtiers.client;
 
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -15,22 +14,14 @@ public final class FlowTierHud {
 	private static final int FLOW_BLUE = 0xFF00BFFF;
 	private static final int WHITE = 0xFFFFFFFF;
 	private static final int GRAY = 0xFFAAAAAA;
-	private static final int GOLD = 0xFFFFD700;
 
-	private FlowTierHud() {
-	}
+	private FlowTierHud() {}
 
 	public static void register(FlowTierCache cache) {
 		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("flowtiers", "ranked_hud"), (context, tickCounter) -> {
-			if (!FlowTierClientConfig.hudEnabled) {
-				return;
-			}
-
+			if (!FlowTierClientConfig.hudEnabled) return;
 			Minecraft client = Minecraft.getInstance();
-			if (client.player == null || client.options.hideGui) {
-				return;
-			}
-
+			if (client.player == null || client.options.hideGui) return;
 			cache.fetch(client.player.getUUID());
 			FlowTierStats stats = cache.getIfFresh(client.player.getUUID()).orElse(null);
 			draw(context, client, stats);
@@ -44,6 +35,8 @@ public final class FlowTierHud {
 		String tierLine = "Loading...";
 		int tierColor = GRAY;
 		String positionLine = null;
+		int positionRank = 0;
+		String positionTier = "";
 		String recordLine = null;
 
 		if (stats != null) {
@@ -56,6 +49,8 @@ public final class FlowTierHud {
 				tierColor = tierColor(ladder.tierLabel(), ladder.position());
 				if (FlowTierClientConfig.positionEnabled && ladder.hasPosition()) {
 					positionLine = "#" + ladder.position() + " " + FlowTierFormatter.displayName(ladder.ladder());
+					positionRank = ladder.position();
+					positionTier = ladder.tierLabel();
 				}
 				if (FlowTierClientConfig.hudRecordEnabled) {
 					recordLine = ladder.wins() + "W " + ladder.losses() + "L";
@@ -69,16 +64,10 @@ public final class FlowTierHud {
 		}
 
 		int width = font.width(header);
-		if (icon != null) {
-			width += font.width("  ") + font.width(icon);
-		}
+		if (icon != null) width += font.width("  ") + font.width(icon);
 		width = Math.max(width, font.width(tierLine));
-		if (positionLine != null) {
-			width = Math.max(width, font.width(positionLine));
-		}
-		if (recordLine != null) {
-			width = Math.max(width, font.width(recordLine));
-		}
+		if (positionLine != null) width = Math.max(width, font.width(positionLine));
+		if (recordLine != null) width = Math.max(width, font.width(recordLine));
 
 		int lines = 2 + (positionLine != null ? 1 : 0) + (recordLine != null ? 1 : 0);
 		int widgetWidth = width + PADDING * 2;
@@ -102,7 +91,8 @@ public final class FlowTierHud {
 		ty += LINE_HEIGHT;
 
 		if (positionLine != null) {
-			context.text(font, positionLine, tx, ty, GOLD, true);
+			int posColor = FlowTierClientConfig.coloredPosition ? positionColor(positionTier, positionRank) : WHITE;
+			context.text(font, positionLine, tx, ty, posColor, true);
 			ty += LINE_HEIGHT;
 		}
 		if (recordLine != null) {
@@ -112,17 +102,11 @@ public final class FlowTierHud {
 
 	private static String tierLine(FlowTierStats.LadderStats ladder) {
 		StringBuilder line = new StringBuilder();
-		if (FlowTierClientConfig.tierEnabled) {
-			line.append(ladder.tierLabel());
-		}
+		if (FlowTierClientConfig.tierEnabled) line.append(ladder.tierLabel());
 		if (FlowTierClientConfig.eloEnabled) {
-			if (!line.isEmpty()) {
-				line.append("  ");
-			}
+			if (!line.isEmpty()) line.append("  ");
 			line.append(ladder.totalRating());
-			if (FlowTierClientConfig.eloLabelEnabled) {
-				line.append(" ELO");
-			}
+			if (FlowTierClientConfig.eloLabelEnabled) line.append(" ELO");
 		}
 		return line.isEmpty() ? FlowTierFormatter.displayName(ladder.ladder()) : line.toString();
 	}
@@ -138,6 +122,17 @@ public final class FlowTierHud {
 	}
 
 	private static int tierColor(String tier, int position) {
+		if (position == 1 || tier.equals("Grandmaster")) return 0xFFFF55FF;
+		if (tier.startsWith("Netherite")) return 0xFF8B5CF6;
+		if (tier.startsWith("Diamond")) return 0xFF55FFFF;
+		if (tier.startsWith("Emerald")) return 0xFF50C878;
+		if (tier.startsWith("Gold")) return 0xFFFFD700;
+		if (tier.startsWith("Iron")) return 0xFFC0C0C0;
+		if (tier.startsWith("Copper")) return 0xFFCD7F32;
+		return GRAY;
+	}
+
+	private static int positionColor(String tier, int position) {
 		if (position == 1 || tier.equals("Grandmaster")) return 0xFFFF55FF;
 		if (tier.startsWith("Netherite")) return 0xFF8B5CF6;
 		if (tier.startsWith("Diamond")) return 0xFF55FFFF;
