@@ -18,12 +18,23 @@ public class PlayerTabOverlayMixin {
 	@Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true)
 	private void flowtiers$appendTabStats(PlayerInfo entry, CallbackInfoReturnable<Component> cir) {
 		if (!FlowTierClientConfig.tabListEnabled) return;
-		if (FlowTierClientConfig.suppressRankedDuplicates && RankedMatchDetector.isInRankedMatch()) return;
+
+		String rawName = cir.getReturnValue().getString();
+		if (rawName != null && rawName.matches("^\\d{2,5}[\\s|].*")) return;
+		if (FlowTierClientConfig.suppressRankedDuplicates && RankedMatchDetector.nameAlreadyHasTierInfo(cir.getReturnValue())) return;
 
 		FlowTiersClientState.cache().fetch(entry.getProfile().id());
-		FlowTiersClientState.cache().getIfFresh(entry.getProfile().id()).ifPresent(stats ->
+		FlowTiersClientState.cache().getIfFresh(entry.getProfile().id()).ifPresent(stats -> {
+			Component suffix = FlowTierFormatter.compact(stats);
+			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
+				cir.setReturnValue(suffix.copy()
+						.append(Component.literal(" "))
+						.append(cir.getReturnValue()));
+			} else {
 				cir.setReturnValue(cir.getReturnValue().copy()
 						.append(Component.literal(" "))
-						.append(FlowTierFormatter.compact(stats))));
+						.append(suffix));
+			}
+		});
 	}
 }

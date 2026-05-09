@@ -27,13 +27,9 @@ public final class RankedMatchDetector {
 
     public static boolean nameAlreadyHasTierInfo(Text text) {
         if (text == null) return false;
-        String s = text.getString();
-        if (s == null || s.isEmpty()) return false;
-        String stripped = stripFormatCodes(s).trim();
-        if (stripped.isEmpty()) return false;
-        String lower = stripped.toLowerCase();
-        if (lower.contains("elo")) return true;
-        if (stripped.matches("^\\d{2,5}\\D.*")) return true;
+        String s = stripFormatCodes(text.getString()).trim();
+        if (s.isEmpty()) return false;
+        if (s.matches("^\\d{2,5}\\s+\\d{2,5}[\\s|].*")) return true;
         return false;
     }
 

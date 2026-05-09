@@ -19,11 +19,20 @@ public class AvatarRendererMixin {
 	@Inject(method = "extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V", at = @At("TAIL"))
 	private void flowtiers$appendNametagStats(Avatar player, AvatarRenderState state, float tickProgress, CallbackInfo ci) {
 		if (!FlowTierClientConfig.nametagEnabled) return;
-		if (FlowTierClientConfig.suppressRankedDuplicates && RankedMatchDetector.isInRankedMatch()) return;
+
+		if (FlowTierClientConfig.suppressRankedDuplicates && state.nameTag != null) {
+			String rawName = state.nameTag.getString();
+			if (rawName != null && rawName.matches("^\\d{2,5}[\\s|].*")) return;
+			if (RankedMatchDetector.nameAlreadyHasTierInfo(state.nameTag)) return;
+		}
 
 		FlowTiersClientState.cache().fetch(player.getUUID());
 		FlowTiersClientState.cache().getIfFresh(player.getUUID()).ifPresent(stats -> {
 			Component suffix = FlowTierFormatter.compact(stats);
+			String suffixStr = suffix.getString();
+
+			if (state.nameTag != null && state.nameTag.getString().contains(suffixStr)) return;
+
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				state.nameTag = suffix.copy()
 						.append(Component.literal(" "))

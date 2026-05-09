@@ -13,13 +13,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import dev.decl.flowtiers.client.FlowTierClientConfig;
 import dev.decl.flowtiers.client.FlowTierFormatter;
 import dev.decl.flowtiers.client.FlowTiersClientState;
+import dev.decl.flowtiers.client.RankedMatchDetector;
 
 @Mixin(PlayerEntityRenderer.class)
 public class PlayerEntityRendererMixin {
 
 	private static final ThreadLocal<Boolean> RENDERING = ThreadLocal.withInitial(() -> false);
 
-	@Inject(method = "renderLabelIfPresent(...)", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "renderLabelIfPresent(Lnet/minecraft/client/network/AbstractClientPlayerEntity;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IF)V", at = @At("HEAD"), cancellable = true)
 	private void flowtiers$appendNametagStats(AbstractClientPlayerEntity player, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, float tickDelta, CallbackInfo ci) {
 		if (!FlowTierClientConfig.nametagEnabled) return;
 		if (RENDERING.get()) return;

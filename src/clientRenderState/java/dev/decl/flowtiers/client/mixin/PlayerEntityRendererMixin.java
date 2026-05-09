@@ -1,6 +1,5 @@
 package dev.decl.flowtiers.client.mixin;
 
-import dev.decl.flowtiers.client.RankedMatchDetector;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -9,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import dev.decl.flowtiers.client.FlowTierClientConfig;
 import dev.decl.flowtiers.client.FlowTierFormatter;
 import dev.decl.flowtiers.client.FlowTiersClientState;
+import dev.decl.flowtiers.client.RankedMatchDetector;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
 import net.minecraft.entity.PlayerLikeEntity;
@@ -29,6 +29,10 @@ public class PlayerEntityRendererMixin {
 		FlowTiersClientState.cache().fetch(player.getUuid());
 		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
 			Text suffix = FlowTierFormatter.compact(stats);
+			String suffixStr = suffix.getString();
+
+			if (state.displayName != null && state.displayName.getString().contains(suffixStr)) return;
+
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				state.displayName = suffix.copy()
 						.append(Text.literal(" "))

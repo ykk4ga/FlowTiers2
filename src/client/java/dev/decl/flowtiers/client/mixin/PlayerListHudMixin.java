@@ -17,7 +17,7 @@ public class PlayerListHudMixin {
 		if (!FlowTierClientConfig.tabListEnabled) return;
 
 		String rawName = cir.getReturnValue().getString();
-		if (rawName != null && rawName.matches("^\\d{2,5}[\\s|].*")) return;
+		if (rawName != null && rawName.matches("^\\d{2,5}[\\s|].*") && FlowTierClientConfig.suppressRankedDuplicates) return;
 		if (FlowTierClientConfig.suppressRankedDuplicates && RankedMatchDetector.nameAlreadyHasTierInfo(cir.getReturnValue())) return;
 
 		FlowTiersClientState.cache().fetch(FlowTierMinecraftCompat.profileId(entry.getProfile()));

@@ -5,7 +5,6 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 
-// todo: fix this here too (no idea why it does not work)
 public final class RankedMatchDetector {
     private static final long CACHE_MS = 2000L;
     private static volatile boolean cachedResult = false;
@@ -25,9 +24,8 @@ public final class RankedMatchDetector {
         if (text == null) return false;
         String s = stripFormatCodes(text.getString()).trim();
         if (s.isEmpty()) return false;
-        String lower = s.toLowerCase();
-        if (lower.contains("elo")) return true;
-        if (s.matches("^\\d{2,5}[\\s|·•].*[A-Za-z_].*")) return true;
+        if (s.toLowerCase().contains("elo")) return true;
+        if (s.matches("^\\d{2,5}[\\s|].*")) return true;
         return false;
     }
 
@@ -35,7 +33,6 @@ public final class RankedMatchDetector {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.level == null) return false;
 
-        // Check tab header/footer
         try {
             var overlay = mc.gui.getTabList();
             for (java.lang.reflect.Field f : overlay.getClass().getDeclaredFields()) {
@@ -47,7 +44,6 @@ public final class RankedMatchDetector {
             }
         } catch (Throwable ignored) {}
 
-        // Scan tab entries
         try {
             ClientPacketListener net = mc.getConnection();
             if (net != null) {
