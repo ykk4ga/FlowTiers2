@@ -19,22 +19,113 @@ public final class FlowTierPlayerStatsScreen extends Screen {
     private boolean loaded;
     private boolean failed;
 
-    public FlowTierPlayerStatsScreen(Screen parent, String uuid, String fallbackName) {
+    private String selectedLadder = null;
+    private List<FlowTierLeaderboardClient.HistoryPoint> historyPoints = null;
+    private boolean historyLoading = false;
+    private int[] graphXPositions = null;
+    private int[] graphYPositions = null;
+    private int cachedMinElo, cachedEloRange;
+    private int cachedGraphBottom, cachedGraphH;
+
+    public FlowTierPlayerStatsScreen(Screen parent, String uuid, String fallbackName, String autoOpenLadder) {
         super(Text.literal("FlowTiers Player Stats"));
         this.parent = parent;
         this.uuid = UUID.fromString(uuid);
         this.fallbackName = fallbackName;
+        this.selectedLadder = autoOpenLadder;
+        if (autoOpenLadder != null) {
+            this.historyLoading = true;
+        }
+    }
+
+    public FlowTierPlayerStatsScreen(Screen parent, String uuid, String fallbackName) {
+        this(parent, uuid, fallbackName, null);
     }
 
     @Override
     protected void init() {
+        clearChildren();
+
         addDrawableChild(ButtonWidget.builder(Text.literal("Back"), button -> {
-            if (client != null) client.setScreen(parent);
+            if (selectedLadder != null) {
+                selectedLadder = null;
+                historyPoints = null;
+                graphXPositions = null;
+                graphYPositions = null;
+                init();
+            } else {
+                if (client != null) client.setScreen(parent);
+            }
         }).dimensions(width / 2 - 42, height - 24, 84, 18).build());
+
+        if (selectedLadder == null) {
+            var cached = FlowTiersClientState.cache().getIfFresh(uuid);
+            if (cached.isPresent()) {
+                addLadderButtons(cached.get());
+            }
+        }
+
         FlowTiersClientState.cache().fetch(uuid).thenAccept(stats -> {
-            loaded = true;
-            failed = stats == null;
+            if (!loaded) {
+                loaded = true;
+                failed = stats == null;
+                if (client != null && selectedLadder == null) {
+                    client.execute(this::init);
+                }
+            }
         });
+
+        // If auto-opened with a ladder, start fetching history
+        if (selectedLadder != null && historyPoints == null && historyLoading) {
+            FlowTiersClientState.leaderboardClient()
+                    .fetchHistory(uuid.toString(), selectedLadder)
+                    .thenAccept(points -> {
+                        if (client != null) client.execute(() -> {
+                            historyPoints = points;
+                            historyLoading = false;
+                        });
+                    });
+        }
+    }
+
+    private void addLadderButtons(FlowTierStats playerStats) {
+        int panelLeft = Math.max(20, width / 2 - 260);
+        int panelRight = Math.min(width - 20, width / 2 + 260);
+        int top = 78;
+        int rowHeight = 16;
+
+        List<FlowTierStats.LadderStats> ladders = playerStats.ladders().values().stream()
+                .filter(FlowTierStats.LadderStats::hasPlayedRanked)
+                .sorted(Comparator.comparing((FlowTierStats.LadderStats l) -> l.ladder().equals("GLOBAL") ? 0 : 1)
+                        .thenComparing(Comparator.comparingInt(FlowTierStats.LadderStats::totalRating).reversed()))
+                .toList();
+
+        int y = top;
+        for (FlowTierStats.LadderStats ladder : ladders) {
+            if (!ladder.ladder().equals("GLOBAL")) {
+                final String ladderId = ladder.ladder();
+                final int buttonY = y;
+                ButtonWidget btn = ButtonWidget.builder(Text.empty(), b -> {
+                    selectedLadder = ladderId;
+                    historyPoints = null;
+                    graphXPositions = null;
+                    graphYPositions = null;
+                    historyLoading = true;
+                    init();
+                    FlowTiersClientState.leaderboardClient()
+                            .fetchHistory(uuid.toString(), ladderId)
+                            .thenAccept(points -> {
+                                if (client != null) client.execute(() -> {
+                                    historyPoints = points;
+                                    historyLoading = false;
+                                });
+                            });
+                }).dimensions(panelLeft, buttonY - 1, panelRight - panelLeft, rowHeight).build();
+                btn.setAlpha(0f);
+                addDrawableChild(btn);
+            }
+            y += rowHeight;
+        }
     }
 
     @Override
@@ -55,11 +146,18 @@ public final class FlowTierPlayerStatsScreen extends Screen {
         var stats = FlowTiersClientState.cache().getIfFresh(uuid);
         if (stats.isEmpty()) {
             String message = loaded || failed ? "No FlowPvP ranked stats found for this player." : "Loading...";
-            context.drawCenteredTextWithShadow(textRenderer, message, width / 2, top + 34, loaded || failed ? 0xFFFFD166 : 0xFFAAAAAA);
+            context.drawCenteredTextWithShadow(textRenderer, message, width / 2, top + 34,
+                    loaded || failed ? 0xFFFFD166 : 0xFFAAAAAA);
             return;
         }
 
         FlowTierStats playerStats = stats.get();
+
+        if (selectedLadder != null) {
+            renderGraph(context, playerStats, panelLeft, panelRight, top, mouseX, mouseY);
+            return;
+        }
+
         context.drawTextWithShadow(textRenderer, "Ladder",  panelLeft + 12,  top - 14, 0xFFB5C7E8);
         context.drawTextWithShadow(textRenderer, "Tier",    panelLeft + 110, top - 14, 0xFFB5C7E8);
         context.drawTextWithShadow(textRenderer, "ELO",     panelLeft + 210, top - 14, 0xFFB5C7E8);
@@ -69,7 +167,7 @@ public final class FlowTierPlayerStatsScreen extends Screen {
 
         List<FlowTierStats.LadderStats> ladders = playerStats.ladders().values().stream()
                 .filter(FlowTierStats.LadderStats::hasPlayedRanked)
-                .sorted(Comparator.comparing((FlowTierStats.LadderStats ladder) -> ladder.ladder().equals("GLOBAL") ? 0 : 1)
+                .sorted(Comparator.comparing((FlowTierStats.LadderStats l) -> l.ladder().equals("GLOBAL") ? 0 : 1)
                         .thenComparing(Comparator.comparingInt(FlowTierStats.LadderStats::totalRating).reversed()))
                 .toList();
 
@@ -81,9 +179,16 @@ public final class FlowTierPlayerStatsScreen extends Screen {
         int y = top;
         for (int i = 0; i < ladders.size(); i++) {
             FlowTierStats.LadderStats ladder = ladders.get(i);
-            if (i % 2 == 0) {
+            boolean hovered = mouseX >= panelLeft && mouseX <= panelRight
+                    && mouseY >= y - 1 && mouseY < y + rowHeight - 1
+                    && !ladder.ladder().equals("GLOBAL");
+
+            if (hovered) {
+                context.fill(panelLeft + 2, y - 1, panelRight - 2, y + rowHeight - 1, 0x553B82F6);
+            } else if (i % 2 == 0) {
                 context.fill(panelLeft + 2, y - 1, panelRight - 2, y + rowHeight - 1, 0x22000000);
             }
+
             context.drawTextWithShadow(textRenderer, FlowTierFormatter.icon(ladder.ladder()),               panelLeft + 12,  y + 3, 0xFFFFFFFF);
             context.drawTextWithShadow(textRenderer, FlowTierFormatter.displayName(ladder.ladder()),        panelLeft + 24,  y + 3, 0xFFFFFFFF);
             context.drawTextWithShadow(textRenderer, ladder.tierLabel(),                                    panelLeft + 110, y + 3, tierColor(ladder.tierLabel(), ladder.position()));
@@ -97,6 +202,130 @@ public final class FlowTierPlayerStatsScreen extends Screen {
         playerStats.bestLadder().ifPresent(best -> context.drawTextWithShadow(textRenderer,
                 "Highest: " + FlowTierFormatter.displayName(best.ladder()) + " " + best.tierLabel(),
                 panelLeft + 12, height - 34, 0xFFFFD700));
+    }
+
+    private void renderGraph(DrawContext context, FlowTierStats playerStats, int panelLeft, int panelRight, int top, int mouseX, int mouseY) {
+        FlowTierStats.LadderStats ladder = playerStats.ladders().get(selectedLadder);
+
+        context.drawCenteredTextWithShadow(textRenderer,
+                FlowTierFormatter.displayName(selectedLadder) + " - ELO History",
+                width / 2, top - 12, 0xFFB5C7E8);
+
+        if (ladder != null) {
+            context.drawTextWithShadow(textRenderer,
+                    ladder.tierLabel() + "  " + ladder.totalRating() + " ELO  " + ladder.wins() + "W/" + ladder.losses() + "L",
+                    panelLeft + 12, top + 2, tierColor(ladder.tierLabel(), ladder.position()));
+        }
+
+        int graphLeft = panelLeft + 40;
+        int graphRight = panelRight - 12;
+        int graphTop = top + 20;
+        int graphBottom = height - 52;
+        int graphW = graphRight - graphLeft;
+        int graphH = graphBottom - graphTop;
+
+        context.fill(graphLeft, graphTop, graphRight, graphBottom, 0x33000000);
+        context.fill(graphLeft, graphTop, graphLeft + 1, graphBottom, 0x44FFFFFF);
+        context.fill(graphLeft, graphBottom - 1, graphRight, graphBottom, 0x44FFFFFF);
+
+        if (historyLoading) {
+            context.drawCenteredTextWithShadow(textRenderer, "Loading history...", width / 2, graphTop + graphH / 2, 0xFFAAAAAA);
+            return;
+        }
+
+        if (historyPoints == null || historyPoints.isEmpty()) {
+            context.drawCenteredTextWithShadow(textRenderer, "No history data available.", width / 2, graphTop + graphH / 2, 0xFFAAAAAA);
+            return;
+        }
+
+        int minElo = historyPoints.stream().mapToInt(FlowTierLeaderboardClient.HistoryPoint::elo).min().orElse(0);
+        int maxElo = historyPoints.stream().mapToInt(FlowTierLeaderboardClient.HistoryPoint::elo).max().orElse(1);
+        int eloRange = Math.max(1, maxElo - minElo);
+        int padding = Math.max(10, eloRange / 10);
+        minElo -= padding;
+        maxElo += padding;
+        eloRange = maxElo - minElo;
+
+        cachedMinElo = minElo;
+        cachedEloRange = eloRange;
+        cachedGraphBottom = graphBottom;
+        cachedGraphH = graphH;
+
+        for (int i = 0; i <= 4; i++) {
+            int gridElo = minElo + (eloRange * i / 4);
+            int gridY = graphBottom - (gridElo - minElo) * graphH / eloRange;
+            context.fill(graphLeft, gridY, graphRight, gridY + 1, 0x22FFFFFF);
+            context.drawTextWithShadow(textRenderer, Integer.toString(gridElo), panelLeft + 12, gridY - 4, 0xFF7C8BA1);
+        }
+
+        int n = historyPoints.size();
+        if (graphXPositions == null || graphXPositions.length != n) {
+            graphXPositions = new int[n];
+            graphYPositions = new int[n];
+        }
+
+        int prevX = -1, prevY = -1;
+        for (int i = 0; i < n; i++) {
+            int elo = historyPoints.get(i).elo();
+            int x = graphLeft + (n == 1 ? graphW / 2 : i * graphW / (n - 1));
+            int y = graphBottom - (elo - minElo) * graphH / eloRange;
+            graphXPositions[i] = x;
+            graphYPositions[i] = y;
+            int dotColor = eloColor(elo);
+
+            if (prevX >= 0) {
+                int lineColor = dotColor & 0xAAFFFFFF;
+                int minY = Math.min(prevY, y);
+                int maxY = Math.max(prevY, y);
+                context.fill(prevX, minY, prevX + 1, maxY + 1, lineColor);
+                int minX = Math.min(prevX, x);
+                int maxX = Math.max(prevX, x);
+                context.fill(minX, y, maxX + 1, y + 1, lineColor);
+            }
+
+            context.fill(x - 1, y - 1, x + 3, y + 3, dotColor);
+            prevX = x;
+            prevY = y;
+        }
+
+        context.drawTextWithShadow(textRenderer,
+                Integer.toString(historyPoints.get(0).elo()),
+                graphLeft + 2, graphTop + 2, 0xFF7C8BA1);
+        context.drawTextWithShadow(textRenderer,
+                Integer.toString(historyPoints.get(n - 1).elo()),
+                graphRight - 24, graphTop + 2, eloColor(historyPoints.get(n - 1).elo()));
+
+        if (graphXPositions != null && mouseY >= graphTop && mouseY <= graphBottom) {
+            int closestIdx = -1;
+            int closestDist = 8;
+            for (int i = 0; i < graphXPositions.length; i++) {
+                int distX = Math.abs(mouseX - graphXPositions[i]);
+                int distY = Math.abs(mouseY - graphYPositions[i]);
+                int dist = Math.max(distX, distY);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestIdx = i;
+                }
+            }
+            if (closestIdx >= 0) {
+                int elo = historyPoints.get(closestIdx).elo();
+                int prev = closestIdx > 0 ? historyPoints.get(closestIdx - 1).elo() : elo;
+                int delta = elo - prev;
+                String deltaStr = closestIdx == 0 ? "start" : (delta >= 0 ? "+" + delta : Integer.toString(delta));
+                int deltaColor = delta >= 0 ? 0xFF55FF55 : 0xFFFF5555;
+                if (closestIdx == 0) deltaColor = 0xFF7C8BA1;
+
+                int tipX = Math.min(graphXPositions[closestIdx] + 6, graphRight - 70);
+                int tipY = Math.max(graphTop + 2, graphYPositions[closestIdx] - 26);
+                context.fill(tipX - 3, tipY - 3, tipX + 68, tipY + 22, 0xEE000000);
+                context.fill(tipX - 3, tipY - 3, tipX + 68, tipY - 2, 0xFF3B82F6);
+                context.drawTextWithShadow(textRenderer, elo + " ELO", tipX, tipY + 2, eloColor(elo));
+                context.drawTextWithShadow(textRenderer, deltaStr, tipX, tipY + 12, deltaColor);
+
+                context.fill(graphXPositions[closestIdx] - 2, graphYPositions[closestIdx] - 2,
+                        graphXPositions[closestIdx] + 4, graphYPositions[closestIdx] + 4, 0xFFFFFFFF);
+            }
+        }
     }
 
     @Override

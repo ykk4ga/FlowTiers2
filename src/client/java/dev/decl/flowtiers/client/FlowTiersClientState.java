@@ -5,8 +5,7 @@ public final class FlowTiersClientState {
 	private static final MojangProfileResolver PROFILE_RESOLVER = new MojangProfileResolver();
 	private static final dev.decl.flowtiers.client.leaderboard.FlowTierLeaderboardClient LEADERBOARD_CLIENT = new dev.decl.flowtiers.client.leaderboard.FlowTierLeaderboardClient();
 
-	private FlowTiersClientState() {
-	}
+	private FlowTiersClientState() {}
 
 	public static FlowTierCache cache() {
 		return CACHE;

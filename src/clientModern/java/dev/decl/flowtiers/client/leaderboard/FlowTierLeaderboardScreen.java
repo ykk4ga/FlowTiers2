@@ -165,11 +165,11 @@ public final class FlowTierLeaderboardScreen extends Screen {
 		if (click.button() == 0) {
 			FlowTierLeaderboardClient.Entry entry = rowAt(click.x(), click.y());
 			if (entry != null && client != null) {
-				client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name()));
+				String autoLadder = ladder.equals("GLOBAL") ? null : ladder;
+				client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name(), autoLadder));
 				return true;
 			}
 		}
-
 		return super.mouseClicked(click, focused);
 	}
 
@@ -179,10 +179,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
 	}
 
 	private static String initialLadder() {
-		if (FlowTierClientConfig.displayMode == FlowTierClientConfig.DisplayMode.GLOBAL) {
-			return "GLOBAL";
-		}
-		return FlowTierClientConfig.preferredLadder;
+		return "GLOBAL";
 	}
 
 	private FlowTierLeaderboardClient.Entry rowAt(double mouseX, double mouseY) {
@@ -235,18 +232,17 @@ public final class FlowTierLeaderboardScreen extends Screen {
 
 	private void searchPlayer() {
 		String query = searchText();
-		if (query.isBlank() || client == null) {
-			return;
-		}
+		if (query.isBlank() || client == null) return;
+		String autoLadder = ladder.equals("GLOBAL") ? null : ladder;
 
 		if (resolvedSearchEntry != null && resolvedSearchEntry.name().equalsIgnoreCase(query)) {
-			client.setScreen(new FlowTierPlayerStatsScreen(this, resolvedSearchEntry.uuid(), resolvedSearchEntry.name()));
+			client.setScreen(new FlowTierPlayerStatsScreen(this, resolvedSearchEntry.uuid(), resolvedSearchEntry.name(), autoLadder));
 			return;
 		}
 
 		for (FlowTierLeaderboardClient.Entry entry : leaderboardClient.state(ladder).entries()) {
 			if (entry.name().equalsIgnoreCase(query)) {
-				client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name()));
+				client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name(), autoLadder));
 				return;
 			}
 		}
@@ -254,19 +250,15 @@ public final class FlowTierLeaderboardScreen extends Screen {
 		searchStatus = "Searching...";
 		try {
 			UUID uuid = parseUuid(query);
-			client.setScreen(new FlowTierPlayerStatsScreen(this, uuid.toString(), query));
+			client.setScreen(new FlowTierPlayerStatsScreen(this, uuid.toString(), query, autoLadder));
 			return;
-		} catch (IllegalArgumentException ignored) {
-		}
+		} catch (IllegalArgumentException ignored) {}
 
 		FlowTiersClientState.profileResolver().resolve(query).thenAccept(result -> {
-			if (client == null) {
-				return;
-			}
-
+			if (client == null) return;
 			client.execute(() -> {
 				if (result.status() == dev.decl.flowtiers.client.MojangProfileResolver.Status.FOUND) {
-					client.setScreen(new FlowTierPlayerStatsScreen(this, result.profile().uuid().toString(), result.profile().name()));
+					client.setScreen(new FlowTierPlayerStatsScreen(this, result.profile().uuid().toString(), result.profile().name(), autoLadder));
 				} else if (result.status() == dev.decl.flowtiers.client.MojangProfileResolver.Status.NOT_FOUND) {
 					searchStatus = "Player not found.";
 				} else {
@@ -277,9 +269,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
 	}
 
 	private void resolveSearchIfNeeded(String query) {
-		if (query.length() < 3 || query.equalsIgnoreCase(pendingResolveName)) {
-			return;
-		}
+		if (query.length() < 3 || query.equalsIgnoreCase(pendingResolveName)) return;
 
 		for (FlowTierLeaderboardClient.Entry entry : leaderboardClient.state(ladder).entries()) {
 			if (entry.name().equalsIgnoreCase(query)) {
@@ -292,27 +282,15 @@ public final class FlowTierLeaderboardScreen extends Screen {
 		pendingResolveName = query;
 		searchStatus = "Resolving...";
 		FlowTiersClientState.profileResolver().resolve(query).thenAccept(result -> {
-			if (client == null) {
-				return;
-			}
-
+			if (client == null) return;
 			client.execute(() -> {
-				if (!query.equals(searchText())) {
-					return;
-				}
-
+				if (!query.equals(searchText())) return;
 				if (result.status() == dev.decl.flowtiers.client.MojangProfileResolver.Status.FOUND) {
 					searchStatus = "Fetching stats...";
 					FlowTiersClientState.cache().fetch(result.profile().uuid()).thenAccept(stats -> {
-						if (client == null) {
-							return;
-						}
-
+						if (client == null) return;
 						client.execute(() -> {
-							if (!query.equals(searchText())) {
-								return;
-							}
-
+							if (!query.equals(searchText())) return;
 							int elo = 0;
 							int position = 0;
 							if (stats != null) {
