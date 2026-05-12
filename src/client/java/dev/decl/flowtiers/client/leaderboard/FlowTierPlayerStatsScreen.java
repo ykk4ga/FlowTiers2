@@ -75,7 +75,6 @@ public final class FlowTierPlayerStatsScreen extends Screen {
             }
         });
 
-        // If auto-opened with a ladder, start fetching history
         if (selectedLadder != null && historyPoints == null && historyLoading) {
             FlowTiersClientState.leaderboardClient()
                     .fetchHistory(uuid.toString(), selectedLadder)
@@ -159,11 +158,11 @@ public final class FlowTierPlayerStatsScreen extends Screen {
         }
 
         context.drawTextWithShadow(textRenderer, "Ladder",  panelLeft + 12,  top - 14, 0xFFB5C7E8);
-        context.drawTextWithShadow(textRenderer, "Tier",    panelLeft + 110, top - 14, 0xFFB5C7E8);
-        context.drawTextWithShadow(textRenderer, "ELO",     panelLeft + 210, top - 14, 0xFFB5C7E8);
-        context.drawTextWithShadow(textRenderer, "Pos",     panelLeft + 275, top - 14, 0xFFB5C7E8);
-        context.drawTextWithShadow(textRenderer, "W/L",     panelLeft + 320, top - 14, 0xFFB5C7E8);
-        context.drawTextWithShadow(textRenderer, "Streak",  panelLeft + 390, top - 14, 0xFFB5C7E8);
+        context.drawTextWithShadow(textRenderer, "Tier",    panelLeft + 100, top - 14, 0xFFB5C7E8);
+        context.drawTextWithShadow(textRenderer, "ELO",     panelLeft + 185, top - 14, 0xFFB5C7E8);
+        context.drawTextWithShadow(textRenderer, "Pos",     panelLeft + 245, top - 14, 0xFFB5C7E8);
+        context.drawTextWithShadow(textRenderer, "W/L",     panelLeft + 290, top - 14, 0xFFB5C7E8);
+        context.drawTextWithShadow(textRenderer, "Streak",  panelLeft + 355, top - 14, 0xFFB5C7E8);
 
         List<FlowTierStats.LadderStats> ladders = playerStats.ladders().values().stream()
                 .filter(FlowTierStats.LadderStats::hasPlayedRanked)
@@ -191,17 +190,18 @@ public final class FlowTierPlayerStatsScreen extends Screen {
 
             context.drawTextWithShadow(textRenderer, FlowTierFormatter.icon(ladder.ladder()),               panelLeft + 12,  y + 3, 0xFFFFFFFF);
             context.drawTextWithShadow(textRenderer, FlowTierFormatter.displayName(ladder.ladder()),        panelLeft + 24,  y + 3, 0xFFFFFFFF);
-            context.drawTextWithShadow(textRenderer, ladder.tierLabel(),                                    panelLeft + 110, y + 3, tierColor(ladder.tierLabel(), ladder.position()));
-            context.drawTextWithShadow(textRenderer, ladder.totalRating() + " ELO",                        panelLeft + 210, y + 3, eloColor(ladder.totalRating()));
-            context.drawTextWithShadow(textRenderer, ladder.hasPosition() ? "#" + ladder.position() : "-", panelLeft + 275, y + 3, ladder.hasPosition() ? 0xFFFFD700 : 0xFF7C8BA1);
-            context.drawTextWithShadow(textRenderer, ladder.wins() + "/" + ladder.losses(),                panelLeft + 320, y + 3, winLossColor(ladder.wins(), ladder.losses()));
-            context.drawTextWithShadow(textRenderer, streak(ladder.currentStreak()),                        panelLeft + 390, y + 3, streakColor(ladder.currentStreak()));
+            context.drawTextWithShadow(textRenderer, ladder.tierLabel(),                                    panelLeft + 100, y + 3, tierColor(ladder.tierLabel(), ladder.position()));
+            context.drawTextWithShadow(textRenderer, ladder.totalRating() + " ELO",                        panelLeft + 185, y + 3, eloColor(ladder.totalRating()));
+            context.drawTextWithShadow(textRenderer, ladder.hasPosition() ? "#" + ladder.position() : "-", panelLeft + 245, y + 3, ladder.hasPosition() ? 0xFFFFD700 : 0xFF7C8BA1);
+            context.drawTextWithShadow(textRenderer, ladder.wins() + "/" + ladder.losses(),                panelLeft + 290, y + 3, winLossColor(ladder.wins(), ladder.losses()));
+            context.drawTextWithShadow(textRenderer, streak(ladder.currentStreak()),                        panelLeft + 355, y + 3, streakColor(ladder.currentStreak()));
             y += rowHeight;
         }
 
+        int highestY = Math.max(height - 34, top + ladders.size() * rowHeight + 6);
         playerStats.bestLadder().ifPresent(best -> context.drawTextWithShadow(textRenderer,
                 "Highest: " + FlowTierFormatter.displayName(best.ladder()) + " " + best.tierLabel(),
-                panelLeft + 12, height - 34, 0xFFFFD700));
+                panelLeft + 12, highestY, 0xFFFFD700));
     }
 
     private void renderGraph(DrawContext context, FlowTierStats playerStats, int panelLeft, int panelRight, int top, int mouseX, int mouseY) {

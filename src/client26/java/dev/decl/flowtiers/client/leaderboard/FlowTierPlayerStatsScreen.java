@@ -156,11 +156,11 @@ public final class FlowTierPlayerStatsScreen extends Screen {
         }
 
         context.text(font, "Ladder",  panelLeft + 12,  top - 14, 0xFFB5C7E8, true);
-        context.text(font, "Tier",    panelLeft + 110, top - 14, 0xFFB5C7E8, true);
-        context.text(font, "ELO",     panelLeft + 210, top - 14, 0xFFB5C7E8, true);
-        context.text(font, "Pos",     panelLeft + 275, top - 14, 0xFFB5C7E8, true);
-        context.text(font, "W/L",     panelLeft + 320, top - 14, 0xFFB5C7E8, true);
-        context.text(font, "Streak",  panelLeft + 390, top - 14, 0xFFB5C7E8, true);
+        context.text(font, "Tier",    panelLeft + 100, top - 14, 0xFFB5C7E8, true);
+        context.text(font, "ELO",     panelLeft + 185, top - 14, 0xFFB5C7E8, true);
+        context.text(font, "Pos",     panelLeft + 245, top - 14, 0xFFB5C7E8, true);
+        context.text(font, "W/L",     panelLeft + 290, top - 14, 0xFFB5C7E8, true);
+        context.text(font, "Streak",  panelLeft + 355, top - 14, 0xFFB5C7E8, true);
 
         List<FlowTierStats.LadderStats> ladders = playerStats.ladders().values().stream()
                 .filter(FlowTierStats.LadderStats::hasPlayedRanked)
@@ -188,17 +188,18 @@ public final class FlowTierPlayerStatsScreen extends Screen {
 
             context.text(font, FlowTierFormatter.icon(ladder.ladder()),               panelLeft + 12,  y + 3, 0xFFFFFFFF, true);
             context.text(font, FlowTierFormatter.displayName(ladder.ladder()),        panelLeft + 24,  y + 3, 0xFFFFFFFF, true);
-            context.text(font, ladder.tierLabel(),                                    panelLeft + 110, y + 3, tierColor(ladder.tierLabel(), ladder.position()), true);
-            context.text(font, ladder.totalRating() + " ELO",                        panelLeft + 210, y + 3, eloColor(ladder.totalRating()), true);
-            context.text(font, ladder.hasPosition() ? "#" + ladder.position() : "-", panelLeft + 275, y + 3, ladder.hasPosition() ? 0xFFFFD700 : 0xFF7C8BA1, true);
-            context.text(font, ladder.wins() + "/" + ladder.losses(),                panelLeft + 320, y + 3, winLossColor(ladder.wins(), ladder.losses()), true);
-            context.text(font, streak(ladder.currentStreak()),                        panelLeft + 390, y + 3, streakColor(ladder.currentStreak()), true);
+            context.text(font, ladder.tierLabel(),                                    panelLeft + 100, y + 3, tierColor(ladder.tierLabel(), ladder.position()), true);
+            context.text(font, ladder.totalRating() + " ELO",                        panelLeft + 185, y + 3, eloColor(ladder.totalRating()), true);
+            context.text(font, ladder.hasPosition() ? "#" + ladder.position() : "-", panelLeft + 245, y + 3, ladder.hasPosition() ? 0xFFFFD700 : 0xFF7C8BA1, true);
+            context.text(font, ladder.wins() + "/" + ladder.losses(),                panelLeft + 290, y + 3, winLossColor(ladder.wins(), ladder.losses()), true);
+            context.text(font, streak(ladder.currentStreak()),                        panelLeft + 355, y + 3, streakColor(ladder.currentStreak()), true);
             y += rowHeight;
         }
 
+        int highestY = Math.max(height - 34, top + ladders.size() * rowHeight + 6);
         playerStats.bestLadder().ifPresent(best -> context.text(font,
                 "Highest: " + FlowTierFormatter.displayName(best.ladder()) + " " + best.tierLabel(),
-                panelLeft + 12, height - 34, 0xFFFFD700, true));
+                panelLeft + 12, highestY, 0xFFFFD700, true));
     }
 
     private void renderGraph(GuiGraphicsExtractor context, FlowTierStats playerStats, int panelLeft, int panelRight, int top, int mouseX, int mouseY) {
