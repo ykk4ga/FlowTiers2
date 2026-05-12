@@ -22,7 +22,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
     private static final int ROW_HEIGHT = 13;
 
     private final FlowTierLeaderboardClient leaderboardClient;
-    private String ladder = initialLadder();
+    private String ladder = "GLOBAL";
     private int scrollOffset;
     private TextFieldWidget searchField;
     private String searchQuery = "";
@@ -161,7 +161,8 @@ public final class FlowTierLeaderboardScreen extends Screen {
         if (button == 0) {
             FlowTierLeaderboardClient.Entry entry = rowAt(mouseX, mouseY);
             if (entry != null && client != null) {
-                client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name()));
+                String autoLadder = ladder.equals("GLOBAL") ? null : ladder;
+                client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name(), autoLadder));
                 return true;
             }
         }
@@ -169,16 +170,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
     }
 
     @Override
-    public boolean shouldPause() {
-        return false;
-    }
-
-    private static String initialLadder() {
-        if (FlowTierClientConfig.displayMode == FlowTierClientConfig.DisplayMode.GLOBAL) {
-            return "GLOBAL";
-        }
-        return FlowTierClientConfig.preferredLadder;
-    }
+    public boolean shouldPause() { return false; }
 
     private FlowTierLeaderboardClient.Entry rowAt(double mouseX, double mouseY) {
         int panelLeft = panelLeft();
@@ -191,17 +183,9 @@ public final class FlowTierLeaderboardScreen extends Screen {
         return index >= 0 && index < entries.size() ? entries.get(index) : null;
     }
 
-    private int panelLeft() {
-        return Math.max(20, width / 2 - 190);
-    }
-
-    private int panelRight() {
-        return Math.min(width - 20, width / 2 + 190);
-    }
-
-    private int tableTop() {
-        return 96;
-    }
+    private int panelLeft() { return Math.max(20, width / 2 - 190); }
+    private int panelRight() { return Math.min(width - 20, width / 2 + 190); }
+    private int tableTop() { return 96; }
 
     private List<FlowTierLeaderboardClient.Entry> visibleEntries(List<FlowTierLeaderboardClient.Entry> entries) {
         String query = searchText();
@@ -221,15 +205,16 @@ public final class FlowTierLeaderboardScreen extends Screen {
     private void searchPlayer() {
         String query = searchText();
         if (query.isBlank() || client == null) return;
+        String autoLadder = ladder.equals("GLOBAL") ? null : ladder;
 
         if (resolvedSearchEntry != null && resolvedSearchEntry.name().equalsIgnoreCase(query)) {
-            client.setScreen(new FlowTierPlayerStatsScreen(this, resolvedSearchEntry.uuid(), resolvedSearchEntry.name()));
+            client.setScreen(new FlowTierPlayerStatsScreen(this, resolvedSearchEntry.uuid(), resolvedSearchEntry.name(), autoLadder));
             return;
         }
 
         for (FlowTierLeaderboardClient.Entry entry : leaderboardClient.state(ladder).entries()) {
             if (entry.name().equalsIgnoreCase(query)) {
-                client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name()));
+                client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name(), autoLadder));
                 return;
             }
         }
@@ -237,7 +222,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
         searchStatus = "Searching...";
         try {
             UUID uuid = parseUuid(query);
-            client.setScreen(new FlowTierPlayerStatsScreen(this, uuid.toString(), query));
+            client.setScreen(new FlowTierPlayerStatsScreen(this, uuid.toString(), query, autoLadder));
             return;
         } catch (IllegalArgumentException ignored) {}
 
@@ -245,7 +230,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
             if (client == null) return;
             client.execute(() -> {
                 if (result.status() == dev.decl.flowtiers.client.MojangProfileResolver.Status.FOUND) {
-                    client.setScreen(new FlowTierPlayerStatsScreen(this, result.profile().uuid().toString(), result.profile().name()));
+                    client.setScreen(new FlowTierPlayerStatsScreen(this, result.profile().uuid().toString(), result.profile().name(), autoLadder));
                 } else if (result.status() == dev.decl.flowtiers.client.MojangProfileResolver.Status.NOT_FOUND) {
                     searchStatus = "Player not found.";
                 } else {

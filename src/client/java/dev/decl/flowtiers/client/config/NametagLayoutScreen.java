@@ -14,7 +14,6 @@ public class NametagLayoutScreen extends Screen {
     private final Screen parent;
     private static final int ROW_H = 24;
     private static final int START_Y = 55;
-    private static final int ROW_W = 420;
 
     private final List<FlowTierClientConfig.NametagComponent> order;
 
@@ -28,7 +27,8 @@ public class NametagLayoutScreen extends Screen {
     protected void init() {
         clearChildren();
         int cx = width / 2;
-        int left = cx - ROW_W / 2;
+        int rowW = Math.min(420, width - 40);
+        int left = cx - rowW / 2;
 
         for (int i = 0; i < order.size(); i++) {
             final int idx = i;
@@ -86,7 +86,8 @@ public class NametagLayoutScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
 
         int cx = width / 2;
-        int left = cx - ROW_W / 2;
+        int rowW = Math.min(420, width - 40);
+        int left = cx - rowW / 2;
 
         context.drawCenteredTextWithShadow(textRenderer, "Nametag Layout", cx, 10, 0xFF00BFFF);
         context.drawCenteredTextWithShadow(textRenderer, "↑↓ reorder  •  toggle ON/OFF", cx, 22, 0xFF888888);
@@ -95,13 +96,13 @@ public class NametagLayoutScreen extends Screen {
         context.drawTextWithShadow(textRenderer, "Move",      left + 190, START_Y - 14, 0xFFAAAAAA);
         context.drawTextWithShadow(textRenderer, "Show",      left + 244, START_Y - 14, 0xFFAAAAAA);
         context.drawTextWithShadow(textRenderer, "Label",     left + 298, START_Y - 14, 0xFFAAAAAA);
-        context.fill(left - 4, START_Y - 4, left + ROW_W + 4, START_Y - 3, 0xFF444444);
+        context.fill(left - 4, START_Y - 4, left + rowW + 4, START_Y - 3, 0xFF444444);
 
         for (int i = 0; i < order.size(); i++) {
             FlowTierClientConfig.NametagComponent comp = order.get(i);
             int y = START_Y + i * ROW_H;
             if (i % 2 == 0) {
-                context.fill(left - 4, y - 2, left + ROW_W + 4, y + ROW_H - 4, 0x22FFFFFF);
+                context.fill(left - 4, y - 2, left + rowW + 4, y + ROW_H - 4, 0x22FFFFFF);
             }
             context.drawTextWithShadow(textRenderer,
                     (i + 1) + ". " + componentName(comp),
@@ -110,7 +111,7 @@ public class NametagLayoutScreen extends Screen {
         }
 
         int previewY = START_Y + order.size() * ROW_H + 14;
-        context.fill(left - 4, previewY - 4, left + ROW_W + 4, previewY + 14, 0x33FFFFFF);
+        context.fill(left - 4, previewY - 4, left + rowW + 4, previewY + 14, 0x33FFFFFF);
         context.drawTextWithShadow(textRenderer, "Preview:", left, previewY + 2, 0xFFAAAAAA);
         context.drawTextWithShadow(textRenderer, FlowTierFormatter.previewCompact(), left + 65, previewY + 2, 0xFFFFFFFF);
     }

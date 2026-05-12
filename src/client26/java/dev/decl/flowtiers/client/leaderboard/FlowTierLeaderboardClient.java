@@ -95,6 +95,38 @@ public final class FlowTierLeaderboardClient {
 		}));
 	}
 
+    public record HistoryPoint(int elo, long timestamp) {}
+
+    public CompletableFuture<List<HistoryPoint>> fetchHistory(String playerUuid, String ladder) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                URI uri = BASE_URI.resolve("ranked-history?playerId=" + playerUuid + "&ladder=" + ladder);
+                HttpRequest request = HttpRequest.newBuilder(uri)
+                        .timeout(TIMEOUT)
+                        .header("Accept", "application/json")
+                        .header("User-Agent", "FlowTiers Minecraft Mod")
+                        .GET()
+                        .build();
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() < 200 || response.statusCode() >= 300) return List.of();
+                JsonArray array = GSON.fromJson(response.body(), JsonArray.class);
+                List<HistoryPoint> points = new ArrayList<>();
+                if (array == null) return points;
+                for (JsonElement el : array) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject obj = el.getAsJsonObject();
+                    points.add(new HistoryPoint(
+                            intValue(obj, "srAfter", 0),
+                            obj.has("date") ? obj.get("date").getAsLong() : 0L
+                    ));
+                }
+                return points;
+            } catch (Exception e) {
+                return List.of();
+            }
+        });
+    }
+
 	private void loadPage(String ladder, int page, boolean replace) {
 		PageState state = state(ladder);
 		state.loading = true;

@@ -30,6 +30,12 @@ public final class FlowTierKeybinds {
 				"category.flowtiers"
 		));
 
+        KeyBinding viewStats = KeyBindingHelper.registerKeyBinding(FlowTierMinecraftCompat.keyBinding(
+                "key.flowtiers.view_stats",
+                InputUtil.GLFW_KEY_K,
+                "category.flowtiers"
+        ));
+
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			unbindAdvancementsIfConflicting(client.options, leaderboard);
 
@@ -48,6 +54,16 @@ public final class FlowTierKeybinds {
 			while (cycleBack.wasPressed()) {
 				cycleLadder(client, -1);
 			}
+
+            while (viewStats.wasPressed()) {
+                if (client.player != null) {
+                    client.setScreen(new dev.decl.flowtiers.client.leaderboard.FlowTierPlayerStatsScreen(
+                            null,
+                            client.player.getUuid().toString(),
+                            client.player.getName().getString()
+                    ));
+                }
+            }
 		});
 	}
 
