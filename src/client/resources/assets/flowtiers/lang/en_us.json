@@ -1,5 +1,5 @@
 {
-  "category.flowtiers": "FlowTiers",
+  "key.category.flowtiers.category": "FlowTiers",
   "key.flowtiers.toggle_hud": "Toggle FlowTiers HUD",
   "key.flowtiers.open_config": "FlowTiers Config",
   "key.flowtiers.open_leaderboard": "Open FlowTiers Leaderboard",

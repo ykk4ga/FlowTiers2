@@ -41,7 +41,7 @@ public final class FlowTierClientConfig {
 	public static boolean hudRecordEnabled = true;
 	public static boolean hudStreakEnabled = false;
 	public static NametagAlignment nametagAlignment = NametagAlignment.LEFT;
-	public static boolean suppressRankedDuplicates = false;
+	public static boolean suppressRankedDuplicates = true;
 	public static List<NametagComponent> nametagOrder = defaultNametagOrder();
 
 	private FlowTierClientConfig() {}
@@ -160,7 +160,7 @@ public final class FlowTierClientConfig {
 		boolean hudRecordEnabled = true;
 		boolean hudStreakEnabled = false;
 		String nametagAlignment = NametagAlignment.LEFT.name();
-		boolean suppressRankedDuplicates = false;
+		boolean suppressRankedDuplicates = true;
 		List<String> nametagOrder = null;
 
 		static Data fromCurrent() {

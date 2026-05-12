@@ -139,7 +139,7 @@ public final class FlowTierPlayerStatsScreen extends Screen {
 
         context.drawCenteredTextWithShadow(textRenderer, "FlowPvP player stats", width / 2, 12, 0xFF7C8BA1);
         context.drawCenteredTextWithShadow(textRenderer, fallbackName, width / 2, 32, 0xFFFFFFFF);
-        context.fill(panelLeft, top - 18, panelRight, height - 42, 0xAA080B12);
+        context.fill(panelLeft, top - 18, panelRight, height - 28, 0xAA080B12);
         context.fill(panelLeft, top - 18, panelRight, top - 2, 0xCC111827);
 
         var stats = FlowTiersClientState.cache().getIfFresh(uuid);
@@ -198,7 +198,7 @@ public final class FlowTierPlayerStatsScreen extends Screen {
             y += rowHeight;
         }
 
-        int highestY = Math.max(height - 34, top + ladders.size() * rowHeight + 6);
+        int highestY = Math.max(height - 46, top + ladders.size() * rowHeight + 6);
         playerStats.bestLadder().ifPresent(best -> context.drawTextWithShadow(textRenderer,
                 "Highest: " + FlowTierFormatter.displayName(best.ladder()) + " " + best.tierLabel(),
                 panelLeft + 12, highestY, 0xFFFFD700));

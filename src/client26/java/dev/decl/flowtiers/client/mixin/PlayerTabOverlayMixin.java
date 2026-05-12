@@ -19,19 +19,26 @@ public class PlayerTabOverlayMixin {
 	private void flowtiers$appendTabStats(PlayerInfo entry, CallbackInfoReturnable<Component> cir) {
 		if (!FlowTierClientConfig.tabListEnabled) return;
 
-		String rawName = cir.getReturnValue().getString();
-		if (rawName != null && rawName.matches("^\\d{2,5}[\\s|].*")) return;
-		if (FlowTierClientConfig.suppressRankedDuplicates && RankedMatchDetector.nameAlreadyHasTierInfo(cir.getReturnValue())) return;
+		if (FlowTierClientConfig.suppressRankedDuplicates && cir.getReturnValue() != null) {
+			String rawName = cir.getReturnValue().getString();
+			if (rawName != null && rawName.matches("^\\d{2,5}[\\s|].*")) return;
+			if (RankedMatchDetector.nameAlreadyHasTierInfo(cir.getReturnValue())) return;
+		}
 
-		FlowTiersClientState.cache().fetch(entry.getProfile().id());
-		FlowTiersClientState.cache().getIfFresh(entry.getProfile().id()).ifPresent(stats -> {
+		java.util.UUID pid = entry.getProfile().id();
+		FlowTiersClientState.cache().fetch(pid);
+		FlowTiersClientState.cache().getIfFresh(pid).ifPresent(stats -> {
 			Component suffix = FlowTierFormatter.compact(stats);
+			String suffixStr = suffix.getString();
+
+			if (cir.getReturnValue() != null && cir.getReturnValue().getString().contains(suffixStr)) return;
+
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				cir.setReturnValue(suffix.copy()
 						.append(Component.literal(" "))
-						.append(cir.getReturnValue()));
+						.append(cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue()));
 			} else {
-				cir.setReturnValue(cir.getReturnValue().copy()
+				cir.setReturnValue((cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue().copy())
 						.append(Component.literal(" "))
 						.append(suffix));
 			}

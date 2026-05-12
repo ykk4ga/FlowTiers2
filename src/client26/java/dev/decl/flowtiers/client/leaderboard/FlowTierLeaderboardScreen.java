@@ -92,9 +92,6 @@ public final class FlowTierLeaderboardScreen extends Screen {
         int bottom = height - 28;
         int rowHeight = 16;
 
-        context.centeredText(font, Component.literal("FlowPvP Leaderboard - ")
-                .append(FlowTierFormatter.icon(ladder))
-                .append(Component.literal(" " + FlowTierFormatter.displayName(ladder))), width / 2, 10, 0xFFFFFFFF);
         context.fill(panelLeft, top - 18, panelRight, bottom, 0xAA080B12);
         context.fill(panelLeft, top - 18, panelRight, top - 2, 0xCC111827);
         context.text(font, "#", panelLeft + 10, top - 14, 0xFFB5C7E8, true);

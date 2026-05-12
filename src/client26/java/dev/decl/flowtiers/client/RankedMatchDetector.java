@@ -24,8 +24,7 @@ public final class RankedMatchDetector {
         if (text == null) return false;
         String s = stripFormatCodes(text.getString()).trim();
         if (s.isEmpty()) return false;
-        if (s.toLowerCase().contains("elo")) return true;
-        if (s.matches("^\\d{2,5}[\\s|].*")) return true;
+        if (s.matches("^\\d{2,5}\\s+\\d{2,5}[\\s|].*")) return true;
         return false;
     }
 
@@ -40,19 +39,6 @@ public final class RankedMatchDetector {
                     f.setAccessible(true);
                     Component t = (Component) f.get(overlay);
                     if (t != null && isRankedKeyword(t.getString().toLowerCase())) return true;
-                }
-            }
-        } catch (Throwable ignored) {}
-
-        try {
-            ClientPacketListener net = mc.getConnection();
-            if (net != null) {
-                int checked = 0;
-                for (PlayerInfo e : net.getOnlinePlayers()) {
-                    if (e == null) continue;
-                    Component disp = e.getTabListDisplayName();
-                    if (disp != null && nameAlreadyHasTierInfo(disp)) return true;
-                    if (++checked >= 16) break;
                 }
             }
         } catch (Throwable ignored) {}
