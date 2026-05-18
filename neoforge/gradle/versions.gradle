@@ -1,0 +1,107 @@
+ext.flowTiersNeoForgeVersions = [
+		"1.21"   : [
+				minecraft          : "1.21",
+				neoForge           : "21.0.167",
+				minecraftDependency: "1.21",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21"
+		],
+		"1.21.1" : [
+				minecraft          : "1.21.1",
+				neoForge           : "21.1.230",
+				minecraftDependency: "1.21.1",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_1"
+		],
+		"1.21.2" : [
+				minecraft          : "1.21.2",
+				neoForge           : "21.2.1-beta",
+				minecraftDependency: "1.21.2",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_2"
+		],
+		"1.21.3" : [
+				minecraft          : "1.21.3",
+				neoForge           : "21.3.96",
+				minecraftDependency: "1.21.3",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_3"
+		],
+		"1.21.4" : [
+				minecraft          : "1.21.4",
+				neoForge           : "21.4.157",
+				minecraftDependency: "1.21.4",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_4"
+		],
+		"1.21.5" : [
+				minecraft          : "1.21.5",
+				neoForge           : "21.5.97",
+				minecraftDependency: "1.21.5",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_5"
+		],
+		"1.21.6" : [
+				minecraft          : "1.21.6",
+				neoForge           : "21.6.20-beta",
+				minecraftDependency: "1.21.6",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_6"
+		],
+		"1.21.7" : [
+				minecraft          : "1.21.7",
+				neoForge           : "21.7.25-beta",
+				minecraftDependency: "1.21.7",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_7"
+		],
+		"1.21.8" : [
+				minecraft          : "1.21.8",
+				neoForge           : "21.8.53",
+				minecraftDependency: "1.21.8",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_8"
+		],
+		"1.21.9" : [
+				minecraft          : "1.21.9",
+				neoForge           : "21.9.16-beta",
+				minecraftDependency: "1.21.9",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_9"
+		],
+		"1.21.10": [
+				minecraft          : "1.21.10",
+				neoForge           : "21.10.64",
+				minecraftDependency: "1.21.10",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_10"
+		],
+		"1.21.11": [
+				minecraft          : "1.21.11",
+				neoForge           : "21.11.42",
+				minecraftDependency: "1.21.11",
+				javaVersion         : 21,
+				sourceSet           : "mc1_21_11"
+		],
+		"26.1"   : [
+				minecraft          : "26.1",
+				neoForge           : "26.1.0.19-beta",
+				minecraftDependency: "26.1",
+				javaVersion         : 25,
+				sourceSet           : "mc26_1"
+		],
+		"26.1.1" : [
+				minecraft          : "26.1.1",
+				neoForge           : "26.1.1.15-beta",
+				minecraftDependency: "26.1.1",
+				javaVersion         : 25,
+				sourceSet           : "mc26_1_1"
+		],
+		"26.1.2" : [
+				minecraft          : "26.1.2",
+				neoForge           : "26.1.2.54-beta",
+				minecraftDependency: "26.1.2",
+				javaVersion         : 25,
+				sourceSet           : "mc26_1_2"
+		]
+]

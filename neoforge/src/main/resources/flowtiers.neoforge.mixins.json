@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "dev.decl.flowtiers.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "AvatarRendererMixin",
+    "PlayerTabOverlayMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

@@ -1,0 +1,111 @@
+plugins {
+	id 'java-library'
+	id 'maven-publish'
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+}
+
+apply from: "gradle/versions.gradle"
+
+def targetMinecraft = (findProperty("target_mc") ?: project.minecraft_version).toString()
+def targetConfig = flowTiersQuiltVersions[targetMinecraft]
+
+if (targetConfig == null) {
+	throw new GradleException("Unsupported Quilt target_mc '${targetMinecraft}'. Supported versions: ${flowTiersQuiltVersions.keySet().join(', ')}")
+}
+
+version = "${project.mod_version}+mc${targetConfig.minecraft}-quilt"
+group = project.maven_group
+
+base {
+	archivesName = "${mod_id}-quilt"
+}
+
+repositories {
+	maven {
+		name = "Quilt"
+		url = "https://maven.quiltmc.org/repository/release"
+	}
+	maven {
+		name = "Shedaniel"
+		url = "https://maven.shedaniel.me/"
+	}
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"flowtiers" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+sourceSets.client.java {
+	srcDir "src/${targetConfig.clickSourceSet}/java"
+	srcDir "src/${targetConfig.renderSourceSet}/java"
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${targetConfig.minecraft}"
+	mappings "net.fabricmc:yarn:${targetConfig.yarn}:v2"
+	modImplementation "org.quiltmc:quilt-loader:${loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${targetConfig.fabricApi}"
+	modImplementation("me.shedaniel.cloth:cloth-config-fabric:${targetConfig.clothConfig}") {
+		exclude group: "net.fabricmc.fabric-api"
+	}
+}
+
+processResources {
+	def props = [
+			version: version,
+			minecraft_dependency: targetConfig.minecraftDependency,
+			java_dependency: ">=${targetConfig.javaVersion}",
+			loader_version: loader_version,
+			mod_id: mod_id,
+			mod_name: mod_name,
+			mod_license: mod_license,
+			mod_authors: mod_authors,
+			mod_description: mod_description,
+			mixin_config: targetConfig.mixinConfig
+	]
+	inputs.properties props
+
+	filesMatching("quilt.mod.json") {
+		expand props
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	options.release = targetConfig.javaVersion
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.toVersion(targetConfig.javaVersion)
+	targetCompatibility = JavaVersion.toVersion(targetConfig.javaVersion)
+}
+
+jar {
+	from('../LICENSE') {
+		rename { "${it}_${mod_id}" }
+	}
+}
+
+flowTiersQuiltVersions.each { minecraftVersion, config ->
+	def taskSuffix = minecraftVersion.replace(".", "_").replace("-", "_")
+	tasks.register("buildMc${taskSuffix}", Exec) {
+		group = "build"
+		description = "Builds FlowTiers Quilt for Minecraft ${minecraftVersion}."
+		def gradleCommand = System.getProperty("os.name").toLowerCase().contains("windows") ? "..\\gradlew.bat" : "../gradlew"
+		commandLine gradleCommand, "build", "-Ptarget_mc=${minecraftVersion}"
+	}
+}
+
+tasks.register("buildAllMcVersions") {
+	group = "build"
+	description = "Builds FlowTiers Quilt for every configured Minecraft release target."
+	dependsOn flowTiersQuiltVersions.keySet().collect { "buildMc${it.replace(".", "_").replace("-", "_")}" }
+}

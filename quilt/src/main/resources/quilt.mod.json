@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "quilt_loader": {
+    "group": "dev.decl",
+    "id": "${mod_id}",
+    "version": "${version}",
+    "metadata": {
+      "name": "${mod_name}",
+      "description": "${mod_description}",
+      "contributors": {},
+      "license": "${mod_license}",
+      "icon": "assets/flowtiers/icon.png",
+      "contact": {
+        "homepage": "https://flowpvp.gg/",
+        "issues": "https://github.com/ykk4ga/FlowTiers2/issues"
+      }
+    },
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "entrypoints": {
+      "init": "dev.decl.flowtiers.FlowTiers",
+      "client_init": "dev.decl.flowtiers.client.FlowTiersClient"
+    },
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "versions": ">=${loader_version}"
+      },
+      {
+        "id": "minecraft",
+        "versions": "${minecraft_dependency}"
+      },
+      {
+        "id": "java",
+        "versions": "${java_dependency}"
+      },
+      {
+        "id": "fabric-api",
+        "versions": "*"
+      },
+      {
+        "id": "cloth-config",
+        "versions": "*"
+      }
+    ]
+  },
+  "mixin": [
+    "${mixin_config}"
+  ]
+}

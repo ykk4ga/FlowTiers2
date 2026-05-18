@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"package": "dev.decl.flowtiers.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"PlayerEntityRendererMixin",
+		"PlayerEntityRendererInvoker",
+		"PlayerListHudMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

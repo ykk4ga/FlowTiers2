@@ -1,0 +1,104 @@
+plugins {
+	id 'java-library'
+	id 'maven-publish'
+	id 'net.neoforged.moddev' version '2.0.141'
+}
+
+apply from: "gradle/versions.gradle"
+
+def targetMinecraft = (findProperty("target_mc") ?: project.minecraft_version).toString()
+def targetConfig = flowTiersNeoForgeVersions[targetMinecraft]
+
+if (targetConfig == null) {
+	throw new GradleException("Unsupported target_mc '${targetMinecraft}'. Supported versions: ${flowTiersNeoForgeVersions.keySet().join(', ')}")
+}
+
+version = "${mod_version}+mc${targetConfig.minecraft}-neoforge"
+group = mod_group_id
+
+base {
+	archivesName = "${mod_id}-neoforge"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(targetConfig.javaVersion)
+
+neoForge {
+	version = targetConfig.neoForge
+
+	runs {
+		client {
+			client()
+		}
+	}
+
+	mods {
+		flowtiers {
+			sourceSet sourceSets.main
+		}
+	}
+}
+
+sourceSets {
+	main {
+		java {
+			if (targetMinecraft.startsWith("26.")) {
+				srcDir "src/${targetConfig.sourceSet}/java"
+				srcDir "src/mc26/java"
+			} else {
+				srcDir "src/${targetConfig.sourceSet}/java"
+				srcDir "src/mc21/java"
+			}
+		}
+		resources {
+			srcDir "src/${targetConfig.sourceSet}/resources"
+		}
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	options.release = targetConfig.javaVersion
+}
+
+processResources {
+	def props = [
+			minecraft_version: targetConfig.minecraft,
+			minecraft_dependency: targetConfig.minecraftDependency,
+			neoforge_version: targetConfig.neoForge,
+			mod_id: mod_id,
+			mod_name: mod_name,
+			mod_license: mod_license,
+			mod_version: version,
+			mod_authors: mod_authors,
+			mod_description: mod_description
+	]
+	inputs.properties props
+
+	filesMatching('META-INF/neoforge.mods.toml') {
+		expand props
+	}
+}
+
+jar {
+	inputs.property "minecraftVersion", targetConfig.minecraft
+
+	from('../LICENSE') {
+		rename { "${it}_${mod_id}" }
+	}
+}
+
+flowTiersNeoForgeVersions.each { minecraftVersion, config ->
+	def taskSuffix = minecraftVersion.replace(".", "_").replace("-", "_")
+	tasks.register("buildMc${taskSuffix}", Exec) {
+		group = "build"
+		description = "Builds FlowTiers NeoForge for Minecraft ${minecraftVersion}."
+		def gradleCommand = System.getProperty("os.name").toLowerCase().contains("windows") ? "..\\gradlew.bat" : "../gradlew"
+		commandLine gradleCommand, "build", "-Ptarget_mc=${minecraftVersion}"
+	}
+}
+
+tasks.register("buildAllMcVersions") {
+	group = "build"
+	description = "Builds FlowTiers NeoForge for every configured Minecraft release target."
+	dependsOn flowTiersNeoForgeVersions.keySet().collect { "buildMc${it.replace(".", "_").replace("-", "_")}" }
+}
