@@ -1,7 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'maven-publish'
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	id 'org.quiltmc.loom' version "${loom_version}"
 }
 
 apply from: "gradle/versions.gradle"
@@ -26,6 +26,10 @@ repositories {
 		url = "https://maven.quiltmc.org/repository/release"
 	}
 	maven {
+		name = "Terraformers"
+		url = "https://maven.terraformersmc.com/releases/"
+	}
+	maven {
 		name = "Shedaniel"
 		url = "https://maven.shedaniel.me/"
 	}
@@ -45,16 +49,16 @@ loom {
 sourceSets.client.java {
 	srcDir "src/${targetConfig.clickSourceSet}/java"
 	srcDir "src/${targetConfig.renderSourceSet}/java"
+	exclude "dev/decl/flowtiers/client/config/HudPlacementEntry.java"
+	exclude "dev/decl/flowtiers/client/config/NametagLayoutButtonEntry.java"
 }
 
 dependencies {
 	minecraft "com.mojang:minecraft:${targetConfig.minecraft}"
 	mappings "net.fabricmc:yarn:${targetConfig.yarn}:v2"
 	modImplementation "org.quiltmc:quilt-loader:${loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${targetConfig.fabricApi}"
-	modImplementation("me.shedaniel.cloth:cloth-config-fabric:${targetConfig.clothConfig}") {
-		exclude group: "net.fabricmc.fabric-api"
-	}
+	modImplementation "org.quiltmc.quilted-fabric-api:quilted-fabric-api:${targetConfig.qfapi}"
+	modCompileOnly "com.terraformersmc:modmenu:${targetConfig.modMenu}"
 }
 
 processResources {

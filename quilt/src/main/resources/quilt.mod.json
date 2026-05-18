@@ -18,7 +18,8 @@
     "intermediate_mappings": "net.fabricmc:intermediary",
     "entrypoints": {
       "init": "dev.decl.flowtiers.FlowTiers",
-      "client_init": "dev.decl.flowtiers.client.FlowTiersClient"
+      "client_init": "dev.decl.flowtiers.client.FlowTiersClient",
+      "modmenu": "dev.decl.flowtiers.client.config.FlowTiersModMenu"
     },
     "depends": [
       {
@@ -34,11 +35,11 @@
         "versions": "${java_dependency}"
       },
       {
-        "id": "fabric-api",
+        "id": "quilted_fabric_api",
         "versions": "*"
       },
       {
-        "id": "cloth-config",
+        "id": "modmenu",
         "versions": "*"
       }
     ]
