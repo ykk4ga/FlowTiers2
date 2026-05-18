@@ -97,7 +97,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
 		context.drawTextWithShadow(textRenderer, "#", panelLeft + 10, top - 14, 0xFFB5C7E8);
 		context.drawTextWithShadow(textRenderer, "Player", panelLeft + 46, top - 14, 0xFFB5C7E8);
 		context.drawTextWithShadow(textRenderer, "Tier", panelRight - 132, top - 14, 0xFFB5C7E8);
-		context.drawTextWithShadow(textRenderer, "ELO", panelRight - 54, top - 14, 0xFFB5C7E8);
+		context.drawTextWithShadow(textRenderer, "SR", panelRight - 54, top - 14, 0xFFB5C7E8);
 
 		if (resolvedSearchEntry != null) {
 			context.drawTextWithShadow(textRenderer, "Found: " + resolvedSearchEntry.name(), panelLeft + 310, 77, 0xFF55FF55);
@@ -136,7 +136,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
 			context.drawTextWithShadow(textRenderer, entry.position() > 0 ? Integer.toString(entry.position()) : "-", panelLeft + 10, y + 3, rankColor(entry.position()));
 			context.drawTextWithShadow(textRenderer, trim(entry.name(), 18), panelLeft + 46, y + 3, nameColor(entry.position()));
 			context.drawTextWithShadow(textRenderer, trim(tier, 12), panelRight - 132, y + 3, tierColor(tier, entry.position()));
-			context.drawTextWithShadow(textRenderer, entry.elo() + " ELO", panelRight - 54, y + 3, eloColor(entry.elo()));
+			context.drawTextWithShadow(textRenderer, entry.elo() + " SR", panelRight - 54, y + 3, eloColor(entry.elo()));
 		}
 		context.disableScissor();
 
@@ -363,23 +363,11 @@ public final class FlowTierLeaderboardScreen extends Screen {
 	}
 
 	private static int tierColor(String tier, int position) {
-		if (position == 1 || tier.equals("Grandmaster")) return 0xFFFF55FF;
-		if (tier.startsWith("Netherite")) return 0xFF8B5CF6;
-		if (tier.startsWith("Diamond")) return 0xFF55FFFF;
-		if (tier.startsWith("Emerald")) return 0xFF50C878;
-		if (tier.startsWith("Gold")) return 0xFFFFD700;
-		if (tier.startsWith("Iron")) return 0xFFC0C0C0;
-		if (tier.startsWith("Copper")) return 0xFFCD7F32;
-		return 0xFFAAAAAA;
-	}
+        int color = dev.decl.flowtiers.client.FlowTierRankSystem.tierColor(tier, position);
+        return color == 0xFFFFFF ? 0xFFAAAAAA : 0xFF000000 | color;
+    }
 
 	private static int eloColor(int elo) {
-		if (elo >= 2175) return 0xFF8B5CF6;
-		if (elo >= 1650) return 0xFF55FFFF;
-		if (elo >= 1275) return 0xFF50C878;
-		if (elo >= 900) return 0xFFFFD700;
-		if (elo >= 600) return 0xFFC0C0C0;
-		if (elo >= 300) return 0xFFCD7F32;
-		return 0xFFAAAAAA;
-	}
+        return 0xFF000000 | dev.decl.flowtiers.client.FlowTierRankSystem.ratingColor(elo);
+    }
 }

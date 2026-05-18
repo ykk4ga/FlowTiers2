@@ -26,8 +26,6 @@ public class PlayerEntityRendererMixin {
 		if (RENDERING.get()) return;
 
 		if (FlowTierClientConfig.suppressRankedDuplicates) {
-			String rawName = text.getString();
-			if (rawName != null && rawName.matches("^\\d{2,5}[\\s|].*")) return;
 			if (RankedMatchDetector.nameAlreadyHasTierInfo(text)) return;
 		}
 

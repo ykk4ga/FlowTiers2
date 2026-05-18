@@ -106,7 +106,7 @@ public final class FlowTierHud {
 		if (FlowTierClientConfig.eloEnabled) {
 			if (!line.isEmpty()) line.append("  ");
 			line.append(ladder.totalRating());
-			if (FlowTierClientConfig.eloLabelEnabled) line.append(" ELO");
+			if (FlowTierClientConfig.eloLabelEnabled) line.append(" ").append(FlowTierRankSystem.RATING_LABEL);
 		}
 		return line.isEmpty() ? FlowTierFormatter.displayName(ladder.ladder()) : line.toString();
 	}
@@ -122,24 +122,12 @@ public final class FlowTierHud {
 	}
 
 	private static int tierColor(String tier, int position) {
-		if (position == 1 || tier.equals("Grandmaster")) return 0xFFFF55FF;
-		if (tier.startsWith("Netherite")) return 0xFF8B5CF6;
-		if (tier.startsWith("Diamond")) return 0xFF55FFFF;
-		if (tier.startsWith("Emerald")) return 0xFF50C878;
-		if (tier.startsWith("Gold")) return 0xFFFFD700;
-		if (tier.startsWith("Iron")) return 0xFFC0C0C0;
-		if (tier.startsWith("Copper")) return 0xFFCD7F32;
-		return GRAY;
+		int color = FlowTierRankSystem.tierColor(tier, position);
+		return color == 0xFFFFFF ? GRAY : 0xFF000000 | color;
 	}
 
 	private static int positionColor(String tier, int position) {
-		if (position == 1 || tier.equals("Grandmaster")) return 0xFFFF55FF;
-		if (tier.startsWith("Netherite")) return 0xFF8B5CF6;
-		if (tier.startsWith("Diamond")) return 0xFF55FFFF;
-		if (tier.startsWith("Emerald")) return 0xFF50C878;
-		if (tier.startsWith("Gold")) return 0xFFFFD700;
-		if (tier.startsWith("Iron")) return 0xFFC0C0C0;
-		if (tier.startsWith("Copper")) return 0xFFCD7F32;
-		return GRAY;
+		int color = FlowTierRankSystem.tierColor(tier, position);
+		return color == 0xFFFFFF ? GRAY : 0xFF000000 | color;
 	}
 }

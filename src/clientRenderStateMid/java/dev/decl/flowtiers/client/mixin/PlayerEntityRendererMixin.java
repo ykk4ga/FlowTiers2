@@ -20,28 +20,40 @@ public class PlayerEntityRendererMixin {
 	private void flowtiers$appendNametagStats(AbstractClientPlayerEntity player, PlayerEntityRenderState state, float tickProgress, CallbackInfo ci) {
 		if (!FlowTierClientConfig.nametagEnabled) return;
 
-		if (FlowTierClientConfig.suppressRankedDuplicates && state.displayName != null) {
-			String rawName = state.displayName.getString();
-			if (rawName != null && rawName.matches("^\\d{2,5}[\\s|].*")) return;
-			if (RankedMatchDetector.nameAlreadyHasTierInfo(state.displayName)) return;
+		Text name = renderName(player, state);
+		if (FlowTierClientConfig.suppressRankedDuplicates && name != null) {
+			if (RankedMatchDetector.nameAlreadyHasTierInfo(name)) return;
 		}
 
 		FlowTiersClientState.cache().fetch(player.getUuid());
 		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
 			Text suffix = FlowTierFormatter.compact(stats);
 			String suffixStr = suffix.getString();
+			Text currentName = renderName(player, state);
 
-			if (state.displayName != null && state.displayName.getString().contains(suffixStr)) return;
+			if (currentName != null && currentName.getString().contains(suffixStr)) return;
 
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				state.displayName = suffix.copy()
 						.append(Text.literal(" "))
-						.append(state.displayName == null ? Text.empty() : state.displayName);
+						.append(currentName == null ? Text.empty() : currentName);
 			} else {
-				state.displayName = (state.displayName == null ? Text.empty() : state.displayName.copy())
+				state.displayName = (currentName == null ? Text.empty() : currentName.copy())
 						.append(Text.literal(" "))
 						.append(suffix);
 			}
 		});
+	}
+
+	private static Text renderName(AbstractClientPlayerEntity player, PlayerEntityRenderState state) {
+		if (state.displayName != null) {
+			return state.displayName;
+		}
+		if (state.playerName != null) {
+			return state.playerName;
+		}
+
+		Text displayName = player.getDisplayName();
+		return displayName == null ? player.getName() : displayName;
 	}
 }

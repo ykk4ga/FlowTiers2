@@ -83,7 +83,7 @@ final class HudPlacementScreen extends Screen {
 		drawBorder(context, x, y, w, h, dragging ? 0xFF93C5FD : 0xFF4B5563);
 		context.text(font, Component.literal("FlowTiers"), x + 4, y + 4, 0xFF00BFFF, true);
 		context.text(font, FlowTierFormatter.icon("SWORD"), x + 72, y + 4, 0xFFFFFFFF, true);
-		context.text(font, Component.literal("Iron III  800 ELO"), x + 4, y + 16, 0xFFC0C0C0, true);
+		context.text(font, Component.literal("MT4  800 SR"), x + 4, y + 16, 0xFFC0C0C0, true);
 		context.text(font, Component.literal("#120 Sword"), x + 4, y + 28, 0xFFFFD700, true);
 	}
 

@@ -11,7 +11,7 @@ import net.minecraft.text.Text;
 
 public final class FlowTiersConfigScreen {
 	private static final String[] LADDERS = {
-			"SWORD", "AXE", "UHC", "VANILLA", "MACE",
+			"SWORD", "AXE", "UHC", "VANILLA", "MACE", "SPEAR_MACE", "CART",
 			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP", "GLOBAL"
 	};
 
@@ -64,7 +64,7 @@ public final class FlowTiersConfigScreen {
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.coloredTier = value)
 				.build());
-		overlay.addEntry(entries.startBooleanToggle(Text.literal("Colored ELO in nametag"), FlowTierClientConfig.coloredElo)
+		overlay.addEntry(entries.startBooleanToggle(Text.literal("Colored SR in nametag"), FlowTierClientConfig.coloredElo)
 				.setDefaultValue(true)
 				.setSaveConsumer(value -> FlowTierClientConfig.coloredElo = value)
 				.build());

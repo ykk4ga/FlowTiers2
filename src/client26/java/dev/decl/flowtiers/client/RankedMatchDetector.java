@@ -24,8 +24,7 @@ public final class RankedMatchDetector {
         if (text == null) return false;
         String s = stripFormatCodes(text.getString()).trim();
         if (s.isEmpty()) return false;
-        if (s.matches("^\\d{2,5}\\s+\\d{2,5}[\\s|].*")) return true;
-        return false;
+        return hasTierToken(s) || s.matches("(?i).*\\b\\d{2,5}\\s+(SR|ELO)\\b.*");
     }
 
     private static boolean detect() {
@@ -55,5 +54,10 @@ public final class RankedMatchDetector {
 
     private static String stripFormatCodes(String s) {
         return s.replaceAll("\u00A7[0-9a-fk-orA-FK-OR]", "");
+    }
+
+    private static boolean hasTierToken(String s) {
+        return s.matches("(?i).*\\b[LMH]T[1-5]\\b.*")
+                || s.matches("(?i).*\\b(Coal|Copper|Iron|Gold|Emerald|Diamond|Netherite|Grandmaster)(\\s+(I|II|III|IV|V))?\\b.*");
     }
 }

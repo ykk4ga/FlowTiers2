@@ -49,61 +49,14 @@ public record FlowTierStats(UUID uuid, String name, Map<String, LadderStats> lad
 
 		public String tierLabel() {
 			if (position == 1) {
-				return "Grandmaster";
+				return "HT1";
 			}
 
 			if (currentRank == null || currentRank.isBlank()) {
-				return hasPlayedRanked() ? fallbackTierLabel(totalRating) : "Unranked";
+				return hasPlayedRanked() ? FlowTierRankSystem.fallbackTierLabel(totalRating) : "Unranked";
 			}
 
-			return titleCaseTier(currentRank);
-		}
-
-		private static String fallbackTierLabel(int rating) {
-			if (rating >= 2175) return "Netherite";
-			if (rating >= 1900) return "Diamond III";
-			if (rating >= 1770) return "Diamond II";
-			if (rating >= 1650) return "Diamond I";
-			if (rating >= 1525) return "Emerald III";
-			if (rating >= 1400) return "Emerald II";
-			if (rating >= 1275) return "Emerald I";
-			if (rating >= 1125) return "Gold III";
-			if (rating >= 1025) return "Gold II";
-			if (rating >= 900) return "Gold I";
-			if (rating >= 800) return "Iron III";
-			if (rating >= 700) return "Iron II";
-			if (rating >= 600) return "Iron I";
-			if (rating >= 500) return "Copper III";
-			if (rating >= 400) return "Copper II";
-			if (rating >= 300) return "Copper I";
-			if (rating >= 200) return "Coal III";
-			if (rating >= 100) return "Coal II";
-			return "Coal I";
-		}
-
-		private static String titleCaseTier(String rank) {
-			String[] words = rank.replace('_', ' ').toLowerCase().split("\\s+");
-			StringBuilder builder = new StringBuilder();
-			for (String word : words) {
-				if (word.isBlank()) {
-					continue;
-				}
-
-				if (!builder.isEmpty()) {
-					builder.append(' ');
-				}
-
-				builder.append(titleCaseTierWord(word));
-			}
-
-			return builder.toString();
-		}
-
-		private static String titleCaseTierWord(String word) {
-			return switch (word.toUpperCase()) {
-				case "I", "II", "III", "IV", "V" -> word.toUpperCase();
-				default -> Character.toUpperCase(word.charAt(0)) + word.substring(1);
-			};
+			return FlowTierRankSystem.normalizeRankLabel(currentRank);
 		}
 	}
 }

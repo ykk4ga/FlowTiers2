@@ -1,19 +1,19 @@
 # FlowTiers
 
-FlowTiers is a client-side Fabric mod that brings FlowPvP ranked stats directly into Minecraft. View tiers, ELO, leaderboard positions, ladder icons, and player profiles without leaving the game.
+FlowTiers is a client-side Fabric mod that brings FlowPvP ranked stats directly into Minecraft. View tier tags, SR, leaderboard positions, ladder icons, and player profiles without leaving the game.
 
 Stats are fetched from the public FlowPvP API.
 
 ## Features
 
-- **HUD stats**: Show your FlowPvP tier, ELO, position, win/loss record, and streak in a compact draggable HUD.
+- **HUD stats**: Show your FlowPvP tier tag, SR, position, win/loss record, and streak in a compact draggable HUD.
 - **Nametag stats**: Display selected FlowPvP stats above player nametags.
 - **Tab list stats**: Add FlowPvP stats to the in-game player list.
 - **Leaderboard screen**: Browse FlowPvP leaderboards in-game with ladder switching, scrolling, search, and player profiles.
 - **Player lookup**: Look up a player's FlowPvP stats across ladders with `/flowtiers <player>`.
 - **Display modes**: Use Global, Highest Tier, or a specific ladder.
-- **Supported ladders**: Global, Highest Tier, Sword, Axe, UHC, Vanilla, Mace, Pot, NethOP, SMP, and DiamondSMP.
-- **Customizable layout**: Configure HUD, nametag, tab list, icons, tier text, ELO, position, and formatting options.
+- **Supported ladders**: Global, Highest Tier, Sword, Axe, UHC, Vanilla, Mace, Spear Mace, Cart, Pot, NethOP, SMP, and DiamondSMP.
+- **Customizable layout**: Configure HUD, nametag, tab list, icons, tier text, SR, position, and formatting options.
 - **Mod Menu config**: Open and customize FlowTiers through Mod Menu.
 
 ## Commands

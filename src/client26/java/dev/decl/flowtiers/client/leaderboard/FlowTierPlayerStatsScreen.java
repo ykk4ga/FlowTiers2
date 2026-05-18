@@ -157,7 +157,7 @@ public final class FlowTierPlayerStatsScreen extends Screen {
 
         context.text(font, "Ladder",  panelLeft + 12,  top - 14, 0xFFB5C7E8, true);
         context.text(font, "Tier",    panelLeft + 100, top - 14, 0xFFB5C7E8, true);
-        context.text(font, "ELO",     panelLeft + 185, top - 14, 0xFFB5C7E8, true);
+        context.text(font, "SR",     panelLeft + 185, top - 14, 0xFFB5C7E8, true);
         context.text(font, "Pos",     panelLeft + 245, top - 14, 0xFFB5C7E8, true);
         context.text(font, "W/L",     panelLeft + 290, top - 14, 0xFFB5C7E8, true);
         context.text(font, "Streak",  panelLeft + 355, top - 14, 0xFFB5C7E8, true);
@@ -189,7 +189,7 @@ public final class FlowTierPlayerStatsScreen extends Screen {
             context.text(font, FlowTierFormatter.icon(ladder.ladder()),               panelLeft + 12,  y + 3, 0xFFFFFFFF, true);
             context.text(font, FlowTierFormatter.displayName(ladder.ladder()),        panelLeft + 24,  y + 3, 0xFFFFFFFF, true);
             context.text(font, ladder.tierLabel(),                                    panelLeft + 100, y + 3, tierColor(ladder.tierLabel(), ladder.position()), true);
-            context.text(font, ladder.totalRating() + " ELO",                        panelLeft + 185, y + 3, eloColor(ladder.totalRating()), true);
+            context.text(font, ladder.totalRating() + " SR",                        panelLeft + 185, y + 3, eloColor(ladder.totalRating()), true);
             context.text(font, ladder.hasPosition() ? "#" + ladder.position() : "-", panelLeft + 245, y + 3, ladder.hasPosition() ? 0xFFFFD700 : 0xFF7C8BA1, true);
             context.text(font, ladder.wins() + "/" + ladder.losses(),                panelLeft + 290, y + 3, winLossColor(ladder.wins(), ladder.losses()), true);
             context.text(font, streak(ladder.currentStreak()),                        panelLeft + 355, y + 3, streakColor(ladder.currentStreak()), true);
@@ -205,12 +205,12 @@ public final class FlowTierPlayerStatsScreen extends Screen {
     private void renderGraph(GuiGraphicsExtractor context, FlowTierStats playerStats, int panelLeft, int panelRight, int top, int mouseX, int mouseY) {
         FlowTierStats.LadderStats ladder = playerStats.ladders().get(selectedLadder);
 
-        context.centeredText(font, Component.literal(FlowTierFormatter.displayName(selectedLadder) + " - ELO History"),
+        context.centeredText(font, Component.literal(FlowTierFormatter.displayName(selectedLadder) + " - SR History"),
                 width / 2, top - 12, 0xFFB5C7E8);
 
         if (ladder != null) {
             context.text(font,
-                    ladder.tierLabel() + "  " + ladder.totalRating() + " ELO  " + ladder.wins() + "W/" + ladder.losses() + "L",
+                    ladder.tierLabel() + "  " + ladder.totalRating() + " SR  " + ladder.wins() + "W/" + ladder.losses() + "L",
                     panelLeft + 12, top + 2, tierColor(ladder.tierLabel(), ladder.position()), true);
         }
 
@@ -304,7 +304,7 @@ public final class FlowTierPlayerStatsScreen extends Screen {
                 int tipY = Math.max(graphTop + 2, graphYPositions[closestIdx] - 26);
                 context.fill(tipX - 3, tipY - 3, tipX + 68, tipY + 22, 0xEE000000);
                 context.fill(tipX - 3, tipY - 3, tipX + 68, tipY - 2, 0xFF3B82F6);
-                context.text(font, elo + " ELO", tipX, tipY + 2, eloColor(elo), true);
+                context.text(font, elo + " SR", tipX, tipY + 2, eloColor(elo), true);
                 context.text(font, deltaStr, tipX, tipY + 12, deltaColor, true);
 
                 context.fill(graphXPositions[closestIdx] - 2, graphYPositions[closestIdx] - 2,
@@ -338,23 +338,11 @@ public final class FlowTierPlayerStatsScreen extends Screen {
     }
 
     private static int tierColor(String tier, int position) {
-        if (position == 1 || tier.equals("Grandmaster")) return 0xFFFF55FF;
-        if (tier.startsWith("Netherite")) return 0xFF8B5CF6;
-        if (tier.startsWith("Diamond")) return 0xFF55FFFF;
-        if (tier.startsWith("Emerald")) return 0xFF50C878;
-        if (tier.startsWith("Gold")) return 0xFFFFD700;
-        if (tier.startsWith("Iron")) return 0xFFC0C0C0;
-        if (tier.startsWith("Copper")) return 0xFFCD7F32;
-        return 0xFFAAAAAA;
+        int color = dev.decl.flowtiers.client.FlowTierRankSystem.tierColor(tier, position);
+        return color == 0xFFFFFF ? 0xFFAAAAAA : 0xFF000000 | color;
     }
 
     private static int eloColor(int elo) {
-        if (elo >= 2175) return 0xFF8B5CF6;
-        if (elo >= 1650) return 0xFF55FFFF;
-        if (elo >= 1275) return 0xFF50C878;
-        if (elo >= 900) return 0xFFFFD700;
-        if (elo >= 600) return 0xFFC0C0C0;
-        if (elo >= 300) return 0xFFCD7F32;
-        return 0xFFAAAAAA;
+        return 0xFF000000 | dev.decl.flowtiers.client.FlowTierRankSystem.ratingColor(elo);
     }
 }

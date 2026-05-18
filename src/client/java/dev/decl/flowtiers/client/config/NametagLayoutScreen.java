@@ -145,7 +145,7 @@ public class NametagLayoutScreen extends Screen {
         return switch (comp) {
             case GAMEMODE_ICON -> "Gamemode Icon";
             case TIER -> "Tier";
-            case ELO -> "ELO";
+            case ELO -> "SR";
             case POSITION -> "Position";
         };
     }

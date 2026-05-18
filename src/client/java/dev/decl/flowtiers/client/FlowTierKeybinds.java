@@ -70,7 +70,7 @@ public final class FlowTierKeybinds {
 	private static final String[] CYCLE = {
 			"MODE:GLOBAL",
 			"MODE:HIGHEST_TIER",
-			"SWORD", "AXE", "UHC", "VANILLA", "MACE",
+			"SWORD", "AXE", "UHC", "VANILLA", "MACE", "SPEAR_MACE", "CART",
 			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP"
 	};
 

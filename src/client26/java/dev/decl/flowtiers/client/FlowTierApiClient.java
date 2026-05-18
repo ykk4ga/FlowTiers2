@@ -17,6 +17,7 @@ import com.google.gson.JsonObject;
 public final class FlowTierApiClient {
 	private static final URI BASE_URI = URI.create("https://flowpvp.gg/api/");
 	private static final Duration TIMEOUT = Duration.ofSeconds(8);
+	private static final String USER_AGENT = "FlowTiers/1.8 (micahcode or .fecl. on Discord)";
 	private static final Gson GSON = new Gson();
 
 	private final HttpClient httpClient = HttpClient.newBuilder()
@@ -28,7 +29,7 @@ public final class FlowTierApiClient {
 		HttpRequest request = HttpRequest.newBuilder(BASE_URI.resolve("ranked/" + uuid))
 				.timeout(TIMEOUT)
 				.header("Accept", "application/json")
-				.header("User-Agent", "FlowTiers Minecraft Mod")
+				.header("User-Agent", USER_AGENT)
 				.GET()
 				.build();
 
@@ -69,12 +70,12 @@ public final class FlowTierApiClient {
 			String key = FlowTierClientConfig.normalizeLadder(entry.getKey());
 			ladders.put(key, new FlowTierStats.LadderStats(
 					key,
-					intValue(ladder, "totalRating", 0),
+					ratingValue(ladder),
 					intValue(ladder, "wins", 0),
 					intValue(ladder, "losses", 0),
 					intValue(ladder, "currentStreak", 0),
 					intValue(ladder, "placementMatchesPlayed", 0),
-					string(ladder, "currentRank", null),
+					firstString(ladder, null, "currentRank", "tier", "tierTag", "rank"),
 					intValue(ladder, "position", 0)
 			));
 		}
@@ -83,7 +84,7 @@ public final class FlowTierApiClient {
 	}
 
 	private static void addGlobalStats(JsonObject root, Map<String, FlowTierStats.LadderStats> ladders) {
-		if (!root.has("globalElo")) {
+		if (!hasAny(root, "globalElo", "globalSr", "globalSkillRating", "globalRating")) {
 			return;
 		}
 
@@ -92,7 +93,7 @@ public final class FlowTierApiClient {
 		int placements = ladders.values().stream().mapToInt(FlowTierStats.LadderStats::placementMatchesPlayed).sum();
 		ladders.put("GLOBAL", new FlowTierStats.LadderStats(
 				"GLOBAL",
-				intValue(root, "globalElo", 0),
+				firstInt(root, 0, "globalSr", "globalSkillRating", "globalRating", "globalElo"),
 				wins,
 				losses,
 				0,
@@ -110,6 +111,39 @@ public final class FlowTierApiClient {
 	private static int intValue(JsonObject object, String key, int fallback) {
 		JsonElement value = object.get(key);
 		return value == null || value.isJsonNull() ? fallback : value.getAsInt();
+	}
+
+	private static int ratingValue(JsonObject object) {
+		return firstInt(object, 0, "sr", "skillRating", "rating", "totalRating", "elo");
+	}
+
+	private static int firstInt(JsonObject object, int fallback, String... keys) {
+		for (String key : keys) {
+			JsonElement value = object.get(key);
+			if (value != null && !value.isJsonNull()) {
+				return value.getAsInt();
+			}
+		}
+		return fallback;
+	}
+
+	private static String firstString(JsonObject object, String fallback, String... keys) {
+		for (String key : keys) {
+			JsonElement value = object.get(key);
+			if (value != null && !value.isJsonNull()) {
+				return value.getAsString();
+			}
+		}
+		return fallback;
+	}
+
+	private static boolean hasAny(JsonObject object, String... keys) {
+		for (String key : keys) {
+			if (object.has(key)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static long longValue(JsonObject object, String key, long fallback) {

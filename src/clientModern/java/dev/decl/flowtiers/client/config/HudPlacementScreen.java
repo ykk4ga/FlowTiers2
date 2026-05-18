@@ -95,7 +95,7 @@ final class HudPlacementScreen extends Screen {
 		context.drawTextWithShadow(renderer, title, tx, ty, FLOW_BLUE);
 		context.drawTextWithShadow(renderer, FlowTierFormatter.icon("SWORD"), tx + renderer.getWidth(title) + renderer.getWidth("  "), ty, 0xFFFFFFFF);
 		ty += LINE_HEIGHT;
-		context.drawTextWithShadow(renderer, "Iron III  800 ELO", tx, ty, 0xFFC0C0C0);
+		context.drawTextWithShadow(renderer, "MT4  800 SR", tx, ty, 0xFFC0C0C0);
 		ty += LINE_HEIGHT;
 		context.drawTextWithShadow(renderer, "#123 Sword", tx, ty, 0xFFFFD700);
 		ty += LINE_HEIGHT;
@@ -112,7 +112,7 @@ final class HudPlacementScreen extends Screen {
 		MinecraftClient client = MinecraftClient.getInstance();
 		TextRenderer renderer = client.textRenderer;
 		int width = renderer.getWidth("FlowTiers  ") + renderer.getWidth(FlowTierFormatter.icon("SWORD"));
-		width = Math.max(width, renderer.getWidth("Iron III  800 ELO"));
+		width = Math.max(width, renderer.getWidth("MT4  800 SR"));
 		width = Math.max(width, renderer.getWidth("#123 Sword"));
 		width = Math.max(width, renderer.getWidth("12W 4L"));
 		return width + PADDING * 2;

@@ -1,6 +1,6 @@
 # FlowTiers
 
-FlowTiers is a client-side Fabric mod that shows FlowPvP ranked stats in-game. It can display a player's tier, ELO, leaderboard position, and ladder icon through a command, HUD overlay, nametags, the tab list, and an in-game leaderboard screen.
+FlowTiers is a client-side Fabric mod that shows FlowPvP ranked stats in-game. It can display a player's tier tag, SR, leaderboard position, and ladder icon through a command, HUD overlay, nametags, the tab list, and an in-game leaderboard screen.
 
 Stats are fetched from the public FlowPvP API at `https://flowpvp.gg/api`.
 

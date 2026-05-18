@@ -117,7 +117,12 @@ public final class FlowTierClientConfig {
 	}
 
 	public static String normalizeLadder(String ladder) {
-		return ladder.trim().toUpperCase().replace('-', '_');
+		String normalized = ladder.trim().toUpperCase().replace('-', '_').replace(' ', '_');
+		return switch (normalized) {
+			case "SPEARMACE", "SPEAR_MACE", "SPEAR" -> "SPEAR_MACE";
+			case "CARTS", "MINECART", "MINECARTS" -> "CART";
+			default -> normalized;
+		};
 	}
 
 	public enum DisplayMode {

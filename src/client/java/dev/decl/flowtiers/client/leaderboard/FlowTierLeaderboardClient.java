@@ -23,6 +23,7 @@ import net.minecraft.client.MinecraftClient;
 public final class FlowTierLeaderboardClient {
 	private static final URI BASE_URI = URI.create("https://flowpvp.gg/api/");
 	private static final Duration TIMEOUT = Duration.ofSeconds(8);
+	private static final String USER_AGENT = "FlowTiers/1.8 (micahcode or .fecl. on Discord)";
 	private static final Gson GSON = new Gson();
 
 	private final HttpClient httpClient = HttpClient.newBuilder()
@@ -125,7 +126,7 @@ public final class FlowTierLeaderboardClient {
 			HttpRequest request = HttpRequest.newBuilder(uri)
 					.timeout(TIMEOUT)
 					.header("Accept", "application/json")
-					.header("User-Agent", "FlowTiers Minecraft Mod")
+					.header("User-Agent", USER_AGENT)
 					.GET()
 					.build();
 
@@ -150,7 +151,7 @@ public final class FlowTierLeaderboardClient {
 						intValue(object, "position", entries.size() + 1),
 						string(object, "uuid", ""),
 						string(object, "name", "Unknown"),
-						intValue(object, "elo", 0)
+						ratingValue(object)
 				));
 			}
 			return entries;
@@ -167,6 +168,16 @@ public final class FlowTierLeaderboardClient {
 	private static int intValue(JsonObject object, String key, int fallback) {
 		JsonElement value = object.get(key);
 		return value == null || value.isJsonNull() ? fallback : value.getAsInt();
+	}
+
+	private static int ratingValue(JsonObject object) {
+		for (String key : new String[] { "sr", "skillRating", "rating", "elo" }) {
+			JsonElement value = object.get(key);
+			if (value != null && !value.isJsonNull()) {
+				return value.getAsInt();
+			}
+		}
+		return 0;
 	}
 
 	public record Entry(int position, String uuid, String name, int elo) {
@@ -212,7 +223,7 @@ public final class FlowTierLeaderboardClient {
 				HttpRequest request = HttpRequest.newBuilder(uri)
 						.timeout(TIMEOUT)
 						.header("Accept", "application/json")
-						.header("User-Agent", "FlowTiers Minecraft Mod")
+						.header("User-Agent", USER_AGENT)
 						.GET()
 						.build();
 
@@ -227,7 +238,7 @@ public final class FlowTierLeaderboardClient {
 					if (!el.isJsonObject()) continue;
 					JsonObject obj = el.getAsJsonObject();
 					points.add(new HistoryPoint(
-							intValue(obj, "srAfter", 0),
+							historyRatingValue(obj),
 							obj.has("date") ? obj.get("date").getAsLong() : 0L
 					));
 				}
@@ -236,5 +247,15 @@ public final class FlowTierLeaderboardClient {
 				return List.of();
 			}
 		});
+	}
+
+	private static int historyRatingValue(JsonObject object) {
+		for (String key : new String[] { "srAfter", "skillRatingAfter", "ratingAfter", "eloAfter", "elo" }) {
+			JsonElement value = object.get(key);
+			if (value != null && !value.isJsonNull()) {
+				return value.getAsInt();
+			}
+		}
+		return 0;
 	}
 }

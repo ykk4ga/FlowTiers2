@@ -18,8 +18,8 @@ public final class FlowTierKeybinds {
 
     private static final String[] CYCLE = {
             "MODE:GLOBAL", "MODE:HIGHEST_TIER",
-            "SWORD", "AXE", "UHC", "VANILLA", "MACE",
-            "DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP"
+			"SWORD", "AXE", "UHC", "VANILLA", "MACE", "SPEAR_MACE", "CART",
+			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP"
     };
 
     private static KeyMapping.Category cachedCategory = null;
