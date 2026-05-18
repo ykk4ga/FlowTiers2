@@ -150,7 +150,7 @@ public final class FlowTierClientConfig {
 		String displayMode = DisplayMode.PREFERRED_LADDER.name();
 		boolean rankSectionEnabled = true;
 		boolean gamemodeIconEnabled = true;
-		boolean tierEnabled = false;
+		boolean tierEnabled = true;
 		boolean shortTierNames = false;
 		boolean eloEnabled = true;
 		boolean eloLabelEnabled = false;
