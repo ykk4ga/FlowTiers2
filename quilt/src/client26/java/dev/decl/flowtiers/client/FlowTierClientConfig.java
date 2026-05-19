@@ -28,7 +28,7 @@ public final class FlowTierClientConfig {
 	public static boolean gamemodeIconEnabled = true;
 	public static boolean tierEnabled = false;
 	public static boolean shortTierNames = false;
-	public static boolean eloEnabled = true;
+	public static boolean eloEnabled = false;
 	public static boolean eloLabelEnabled = false;
 	public static boolean coloredElo = true;
 	public static boolean coloredTier = true;
@@ -152,7 +152,7 @@ public final class FlowTierClientConfig {
 		boolean gamemodeIconEnabled = true;
 		boolean tierEnabled = true;
 		boolean shortTierNames = false;
-		boolean eloEnabled = true;
+		boolean eloEnabled = false;
 		boolean eloLabelEnabled = false;
 		boolean coloredElo = true;
 		boolean coloredTier = true;
