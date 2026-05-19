@@ -30,7 +30,7 @@ public final class FlowTierClientConfig {
 	public static NametagAlignment nametagAlignment = NametagAlignment.LEFT;
 	public static boolean gamemodeIconEnabled = true;
 	public static boolean tierEnabled = true;
-	public static boolean eloEnabled = true;
+	public static boolean eloEnabled = false;
 	public static boolean eloLabelEnabled = false;
 	public static boolean positionEnabled = false;
 	public static boolean positionLabelEnabled = false;
@@ -160,7 +160,7 @@ public final class FlowTierClientConfig {
 		boolean shortTierNames = false;
 		boolean gamemodeIconEnabled = true;
 		boolean tierEnabled = false;
-		boolean eloEnabled = true;
+		boolean eloEnabled = false;
 		boolean eloLabelEnabled = false;
 		boolean coloredElo = true;
 		boolean positionEnabled = false;
