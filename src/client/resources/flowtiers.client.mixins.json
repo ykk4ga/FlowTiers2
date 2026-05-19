@@ -3,6 +3,7 @@
 	"package": "dev.decl.flowtiers.client.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"LunarPlayerEntityMixin",
 		"PlayerEntityRendererMixin",
 		"PlayerEntityRendererInvoker",
 		"PlayerListHudMixin"
