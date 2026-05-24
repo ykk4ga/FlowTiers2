@@ -80,7 +80,8 @@ public final class FlowTierFormatter {
 		MutableComponent text = Component.empty();
 		boolean wrotePart = false;
 
-		for (FlowTierClientConfig.NametagComponent component : FlowTierClientConfig.nametagOrder) {
+		for (int componentIndex = 0; componentIndex < FlowTierClientConfig.nametagOrder.size(); componentIndex++) {
+			FlowTierClientConfig.NametagComponent component = FlowTierClientConfig.nametagOrder.get(componentIndex);
 			switch (component) {
 				case GAMEMODE_ICON -> {
 					if (!FlowTierClientConfig.gamemodeIconEnabled) continue;
@@ -98,9 +99,14 @@ public final class FlowTierFormatter {
 					}
 					wrotePart = true;
 				}
+				case SEPARATOR -> {
+					if (!FlowTierClientConfig.separatorEnabled) continue;
+					if (!hasFollowingNametagPart(ladder, componentIndex + 1)) continue;
+					if (wrotePart) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+				}
 				case ELO -> {
 					if (!FlowTierClientConfig.eloEnabled) continue;
-					if (wrotePart) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
 					Style eloStyle = Style.EMPTY.withColor(FlowTierClientConfig.coloredElo ? ratingColor(ladder.totalRating()) : 0xFFFFFF);
 					text.append(Component.literal(Integer.toString(ladder.totalRating())).withStyle(eloStyle));
 					if (FlowTierClientConfig.eloLabelEnabled)
@@ -109,7 +115,7 @@ public final class FlowTierFormatter {
 				}
 				case POSITION -> {
 					if (!FlowTierClientConfig.positionEnabled || !ladder.hasPosition()) continue;
-					if (wrotePart) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
 					int posColor = FlowTierClientConfig.coloredPosition ? positionColor(ladder.tierLabel(), ladder.position()) : 0xFFFFFF;
 					if (FlowTierClientConfig.positionLabelEnabled)
 						text.append(Component.literal("#").withStyle(Style.EMPTY.withColor(posColor)));
@@ -119,6 +125,32 @@ public final class FlowTierFormatter {
 			}
 		}
 		return text;
+	}
+
+	private static boolean endsWithSeparator(Component text) {
+		return text.getString().endsWith(" | ");
+	}
+
+	private static boolean hasFollowingNametagPart(FlowTierStats.LadderStats ladder, int startIndex) {
+		for (int i = startIndex; i < FlowTierClientConfig.nametagOrder.size(); i++) {
+			switch (FlowTierClientConfig.nametagOrder.get(i)) {
+				case GAMEMODE_ICON -> {
+					if (FlowTierClientConfig.gamemodeIconEnabled) return true;
+				}
+				case TIER -> {
+					if (FlowTierClientConfig.tierEnabled) return true;
+				}
+				case ELO -> {
+					if (FlowTierClientConfig.eloEnabled) return true;
+				}
+				case POSITION -> {
+					if (FlowTierClientConfig.positionEnabled && ladder.hasPosition()) return true;
+				}
+				case SEPARATOR -> {
+				}
+			}
+		}
+		return false;
 	}
 
 	private static String tierLabel(FlowTierStats.LadderStats ladder) {

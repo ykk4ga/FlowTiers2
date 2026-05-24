@@ -1,13 +1,19 @@
 package dev.decl.flowtiers.client;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+
 import dev.decl.flowtiers.client.leaderboard.FlowTierLeaderboardScreen;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 
 public final class FlowTierKeybinds {
+	private static final String CATEGORY = "key.categories.misc";
+
 	private FlowTierKeybinds() {
 	}
 
@@ -15,28 +21,29 @@ public final class FlowTierKeybinds {
 		KeyBinding leaderboard = KeyBindingHelper.registerKeyBinding(FlowTierMinecraftCompat.keyBinding(
 				"key.flowtiers.open_leaderboard",
 				InputUtil.GLFW_KEY_L,
-				"category.flowtiers"
+				CATEGORY
 		));
 
 		KeyBinding cycleForward = KeyBindingHelper.registerKeyBinding(FlowTierMinecraftCompat.keyBinding(
 				"key.flowtiers.cycle_mode",
 				-1,
-				"category.flowtiers"
+				CATEGORY
 		));
 
 		KeyBinding cycleBack = KeyBindingHelper.registerKeyBinding(FlowTierMinecraftCompat.keyBinding(
 				"key.flowtiers.cycle_mode_back",
 				-1,
-				"category.flowtiers"
+				CATEGORY
 		));
 
         KeyBinding viewStats = KeyBindingHelper.registerKeyBinding(FlowTierMinecraftCompat.keyBinding(
                 "key.flowtiers.view_stats",
                 InputUtil.GLFW_KEY_K,
-                "category.flowtiers"
+                CATEGORY
         ));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			installIntoOptions(client.options, leaderboard, cycleForward, cycleBack, viewStats);
 			unbindAdvancementsIfConflicting(client.options, leaderboard);
 
 			while (leaderboard.wasPressed()) {
@@ -129,5 +136,52 @@ public final class FlowTierKeybinds {
 			KeyBinding.updateKeysByCode();
 			options.write();
 		}
+	}
+
+	private static boolean installedIntoOptions = false;
+
+	private static void installIntoOptions(GameOptions options, KeyBinding... bindings) {
+		if (installedIntoOptions || options == null) return;
+
+		for (Field field : GameOptions.class.getDeclaredFields()) {
+			if (field.getType() != KeyBinding[].class) continue;
+
+			try {
+				field.setAccessible(true);
+				KeyBinding[] existing = (KeyBinding[]) field.get(options);
+				if (existing == null || existing.length < 20) continue;
+				if (contains(existing, bindings[0])) {
+					installedIntoOptions = true;
+					return;
+				}
+
+				KeyBinding[] expanded = Arrays.copyOf(existing, existing.length + bindings.length);
+				System.arraycopy(bindings, 0, expanded, existing.length, bindings.length);
+				field.set(options, expanded);
+				KeyBinding.updateKeysByCode();
+				installedIntoOptions = true;
+				return;
+			} catch (ReflectiveOperationException ignored) {
+			}
+		}
+	}
+
+	private static boolean contains(KeyBinding[] existing, KeyBinding binding) {
+		String translationKey = keyName(binding);
+		for (KeyBinding key : existing) {
+			if (key != null && translationKey.equals(keyName(key))) return true;
+		}
+		return false;
+	}
+
+	private static String keyName(KeyBinding binding) {
+		for (String methodName : new String[] { "getTranslationKey", "getName", "getId" }) {
+			try {
+				Object value = KeyBinding.class.getMethod(methodName).invoke(binding);
+				if (value instanceof String name) return name;
+			} catch (ReflectiveOperationException ignored) {
+			}
+		}
+		return binding.toString();
 	}
 }

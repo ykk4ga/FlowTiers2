@@ -1,6 +1,7 @@
 package dev.decl.flowtiers.client;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.UUID;
@@ -51,7 +52,6 @@ public final class FlowTierMinecraftCompat {
 
 			Class<?> paramType = method.getParameterTypes()[0];
 
-			// 1.21.2+
 			if (paramType.isAssignableFrom(fontId.getClass())) {
 				try {
 					Object result = method.invoke(Style.EMPTY, fontId);
@@ -79,61 +79,120 @@ public final class FlowTierMinecraftCompat {
 		return Style.EMPTY;
 	}
 
+	private static Object cachedCategory = null;
+
+	private static Object getMiscCategory() {
+		if (cachedCategory != null) return cachedCategory;
+
+		for (Class<?> categoryClass : KeyBinding.class.getDeclaredClasses()) {
+			try {
+				Field misc = categoryClass.getField("MISC");
+				if (Modifier.isStatic(misc.getModifiers())) {
+					cachedCategory = misc.get(null);
+					if (cachedCategory != null) return cachedCategory;
+				}
+			} catch (ReflectiveOperationException ignored) {}
+
+			try {
+				if (categoryClass.isEnum()) {
+					for (Object constant : (Object[]) categoryClass.getMethod("values").invoke(null)) {
+						String name = constant.toString();
+						if (name.equals("MISC") || name.contains("misc") || name.contains("MISC")) {
+							cachedCategory = constant;
+							return cachedCategory;
+						}
+					}
+				}
+			} catch (ReflectiveOperationException ignored) {}
+
+			for (Method create : categoryClass.getDeclaredMethods()) {
+				if (Modifier.isStatic(create.getModifiers())
+						&& create.getParameterCount() == 1
+						&& create.getParameterTypes()[0] == String.class
+						&& create.getReturnType() == categoryClass) {
+					try {
+						create.setAccessible(true);
+						cachedCategory = create.invoke(null, "key.categories.misc");
+						if (cachedCategory != null) return cachedCategory;
+					} catch (ReflectiveOperationException ignored) {}
+				}
+			}
+		}
+		return null;
+	}
+
 	public static KeyBinding keyBinding(String translationKey, int code, String categoryTranslationKey) {
-		// 1.21.2+
-		try {
-			Constructor<KeyBinding> constructor = KeyBinding.class.getConstructor(
-					String.class, InputUtil.Type.class, int.class, String.class);
-			return constructor.newInstance(translationKey, InputUtil.Type.KEYSYM, code, categoryTranslationKey);
-		} catch (ReflectiveOperationException ignored) {
+		Object category = getMiscCategory();
+
+		if (category != null) {
+			try {
+				Constructor<KeyBinding> ctor = KeyBinding.class.getConstructor(
+						String.class, InputUtil.Type.class, int.class, category.getClass());
+				return ctor.newInstance(translationKey, InputUtil.Type.KEYSYM, code, category);
+			} catch (ReflectiveOperationException ignored) {}
+
+			try {
+				Constructor<KeyBinding> ctor = KeyBinding.class.getConstructor(
+						String.class, int.class, category.getClass());
+				return ctor.newInstance(translationKey, code, category);
+			} catch (ReflectiveOperationException ignored) {}
+
+			try {
+				Constructor<KeyBinding> ctor = KeyBinding.class.getConstructor(
+						String.class, int.class, category.getClass().getSuperclass());
+				return ctor.newInstance(translationKey, code, category);
+			} catch (ReflectiveOperationException ignored) {}
 		}
 
-		// before 1.21.2
 		try {
 			return categorizedKeyBinding(translationKey, code,
 					FabricLoader.getInstance().getMappingResolver());
-		} catch (ReflectiveOperationException exception) {
-			throw new IllegalStateException("Could not create FlowTiers keybinding.", exception);
+		} catch (ReflectiveOperationException ignored) {}
+
+		for (Constructor<?> ctor : KeyBinding.class.getConstructors()) {
+			Class<?>[] params = ctor.getParameterTypes();
+			try {
+				if (params.length == 3 && params[0] == String.class && params[1] == int.class) {
+					return (KeyBinding) ctor.newInstance(translationKey, code, params[2].getField("MISC").get(null));
+				}
+				if (params.length == 4 && params[0] == String.class && params[2] == int.class) {
+					return (KeyBinding) ctor.newInstance(translationKey, InputUtil.Type.KEYSYM, code,
+							params[3].getField("MISC").get(null));
+				}
+			} catch (Exception ignored) {}
 		}
+
+		throw new IllegalStateException("Could not create FlowTiers keybinding.");
 	}
 
-	private static Object cachedCategory = null;
-
 	private static KeyBinding categorizedKeyBinding(String translationKey, int code, MappingResolver mappings) throws ReflectiveOperationException {
-		if (cachedCategory == null) {
+		Object category = getMiscCategory();
+		if (category == null) {
 			try {
 				Class<?> categoryClass = Class.forName(mappings.mapClassName("named", "net.minecraft.client.option.KeyBinding$Category"));
-				String createName = mappings.mapMethodName(
+				String registerName = mappings.mapMethodName(
 						"named",
 						"net.minecraft.client.option.KeyBinding$Category",
-						"create",
-						"(Lnet/minecraft/util/Identifier;)Lnet/minecraft/client/option/KeyBinding$Category;"
+						"register",
+						"(Ljava/lang/String;)Lnet/minecraft/client/option/KeyBinding$Category;"
 				);
-				Method create = categoryClass.getMethod(createName, Identifier.class);
-				create.setAccessible(true);
-				cachedCategory = create.invoke(null, Identifier.of("flowtiers", "category"));
-			} catch (ReflectiveOperationException exception) {
-				for (Class<?> categoryClass : KeyBinding.class.getDeclaredClasses()) {
-					for (Method create : categoryClass.getDeclaredMethods()) {
-						if (Modifier.isStatic(create.getModifiers())
-								&& create.getParameterCount() == 1
-								&& create.getParameterTypes()[0] == Identifier.class
-								&& create.getReturnType() == categoryClass) {
-							create.setAccessible(true);
-							cachedCategory = create.invoke(null, Identifier.of("flowtiers", "category"));
-							break;
-						}
-					}
-					if (cachedCategory != null) break;
-				}
-			}
-			if (cachedCategory == null) {
-				throw new ReflectiveOperationException("Could not create keybinding category.");
+				Method register = categoryClass.getMethod(registerName, String.class);
+				register.setAccessible(true);
+				category = register.invoke(null, "misc");
+				cachedCategory = category;
+			} catch (ReflectiveOperationException e) {
+				throw new ReflectiveOperationException("Could not create keybinding category.", e);
 			}
 		}
 
-		Constructor<KeyBinding> constructor = KeyBinding.class.getConstructor(
-				String.class, InputUtil.Type.class, int.class, cachedCategory.getClass());
-		return constructor.newInstance(translationKey, InputUtil.Type.KEYSYM, code, cachedCategory);
+		try {
+			Constructor<KeyBinding> ctor = KeyBinding.class.getConstructor(
+					String.class, InputUtil.Type.class, int.class, category.getClass());
+			return ctor.newInstance(translationKey, InputUtil.Type.KEYSYM, code, category);
+		} catch (ReflectiveOperationException ignored) {}
+
+		Constructor<KeyBinding> ctor = KeyBinding.class.getConstructor(
+				String.class, int.class, category.getClass());
+		return ctor.newInstance(translationKey, code, category);
 	}
 }

@@ -30,6 +30,7 @@ public final class FlowTierClientConfig {
 	public static NametagAlignment nametagAlignment = NametagAlignment.LEFT;
 	public static boolean gamemodeIconEnabled = true;
 	public static boolean tierEnabled = true;
+	public static boolean separatorEnabled = true;
 	public static boolean eloEnabled = true;
 	public static boolean eloLabelEnabled = false;
 	public static boolean positionEnabled = false;
@@ -48,7 +49,7 @@ public final class FlowTierClientConfig {
 
 	public static List<NametagComponent> defaultNametagOrder() {
 		return new ArrayList<>(List.of(
-				NametagComponent.GAMEMODE_ICON, NametagComponent.TIER,
+				NametagComponent.GAMEMODE_ICON, NametagComponent.TIER, NametagComponent.SEPARATOR,
 				NametagComponent.ELO, NametagComponent.POSITION
 		));
 	}
@@ -91,6 +92,7 @@ public final class FlowTierClientConfig {
 			nametagAlignment = data.nametagAlignment == null ? NametagAlignment.LEFT :
 					NametagAlignment.valueOf(data.nametagAlignment.toUpperCase());
 			suppressRankedDuplicates = data.suppressRankedDuplicates;
+			separatorEnabled = data.separatorEnabled;
 			nametagOrder = parseNametagOrder(data.nametagOrder);
 		} catch (Exception exception) {
 			FlowTiers.LOGGER.warn("Failed to load FlowTiers config.", exception);
@@ -126,7 +128,12 @@ public final class FlowTierClientConfig {
 			} catch (IllegalArgumentException ignored) {
 			}
 		}
-		return order.isEmpty() ? defaultNametagOrder() : order;
+		if (order.isEmpty()) return defaultNametagOrder();
+		if (!order.contains(NametagComponent.SEPARATOR)) {
+			int tierIndex = order.indexOf(NametagComponent.TIER);
+			order.add(tierIndex >= 0 ? tierIndex + 1 : order.size(), NametagComponent.SEPARATOR);
+		}
+		return order;
 	}
 
 	public enum DisplayMode {
@@ -147,7 +154,7 @@ public final class FlowTierClientConfig {
 	}
 
 	public enum NametagComponent {
-		GAMEMODE_ICON, TIER, ELO, POSITION
+		GAMEMODE_ICON, TIER, SEPARATOR, ELO, POSITION
 	}
 
 	private static final class Data {
@@ -160,6 +167,7 @@ public final class FlowTierClientConfig {
 		boolean shortTierNames = false;
 		boolean gamemodeIconEnabled = true;
 		boolean tierEnabled = true;
+		boolean separatorEnabled = true;
 		boolean eloEnabled = true;
 		boolean eloLabelEnabled = false;
 		boolean coloredElo = true;
@@ -186,6 +194,7 @@ public final class FlowTierClientConfig {
 			data.rankSectionEnabled = FlowTierClientConfig.gamemodeIconEnabled || FlowTierClientConfig.tierEnabled;
 			data.gamemodeIconEnabled = FlowTierClientConfig.gamemodeIconEnabled;
 			data.tierEnabled = FlowTierClientConfig.tierEnabled;
+			data.separatorEnabled = FlowTierClientConfig.separatorEnabled;
 			data.shortTierNames = FlowTierClientConfig.shortTierNames;
 			data.eloEnabled = FlowTierClientConfig.eloEnabled;
 			data.eloLabelEnabled = FlowTierClientConfig.eloLabelEnabled;

@@ -30,6 +30,7 @@ public final class FlowTierClientConfig {
 	public static NametagAlignment nametagAlignment = NametagAlignment.LEFT;
 	public static boolean gamemodeIconEnabled = true;
 	public static boolean tierEnabled = true;
+	public static boolean separatorEnabled = true;
 	public static boolean eloEnabled = false;
 	public static boolean eloLabelEnabled = false;
 	public static boolean positionEnabled = false;
@@ -48,7 +49,7 @@ public final class FlowTierClientConfig {
 
 	public static List<NametagComponent> defaultNametagOrder() {
 		return new ArrayList<>(List.of(
-				NametagComponent.GAMEMODE_ICON, NametagComponent.TIER,
+				NametagComponent.GAMEMODE_ICON, NametagComponent.TIER, NametagComponent.SEPARATOR,
 				NametagComponent.ELO, NametagComponent.POSITION
 		));
 	}
@@ -100,6 +101,8 @@ public final class FlowTierClientConfig {
 			} else {
 				nametagOrder = defaultNametagOrder();
 			}
+			separatorEnabled = data.separatorEnabled;
+			ensureSeparatorComponent();
 		} catch (IOException exception) {
 			FlowTiers.LOGGER.warn("Failed to load FlowTiers config.", exception);
 		}
@@ -147,7 +150,14 @@ public final class FlowTierClientConfig {
 	}
 
 	public enum NametagComponent {
-		GAMEMODE_ICON, TIER, ELO, POSITION
+		GAMEMODE_ICON, TIER, SEPARATOR, ELO, POSITION
+	}
+
+	private static void ensureSeparatorComponent() {
+		if (nametagOrder.contains(NametagComponent.SEPARATOR)) return;
+
+		int tierIndex = nametagOrder.indexOf(NametagComponent.TIER);
+		nametagOrder.add(tierIndex >= 0 ? tierIndex + 1 : nametagOrder.size(), NametagComponent.SEPARATOR);
 	}
 
 	private static final class Data {
@@ -160,6 +170,7 @@ public final class FlowTierClientConfig {
 		boolean shortTierNames = false;
 		boolean gamemodeIconEnabled = true;
 		boolean tierEnabled = false;
+		boolean separatorEnabled = true;
 		boolean eloEnabled = false;
 		boolean eloLabelEnabled = false;
 		boolean coloredElo = true;
@@ -186,6 +197,7 @@ public final class FlowTierClientConfig {
 			data.rankSectionEnabled = FlowTierClientConfig.gamemodeIconEnabled || FlowTierClientConfig.tierEnabled;
 			data.gamemodeIconEnabled = FlowTierClientConfig.gamemodeIconEnabled;
 			data.tierEnabled = FlowTierClientConfig.tierEnabled;
+			data.separatorEnabled = FlowTierClientConfig.separatorEnabled;
 			data.shortTierNames = FlowTierClientConfig.shortTierNames;
 			data.eloEnabled = FlowTierClientConfig.eloEnabled;
 			data.eloLabelEnabled = FlowTierClientConfig.eloLabelEnabled;

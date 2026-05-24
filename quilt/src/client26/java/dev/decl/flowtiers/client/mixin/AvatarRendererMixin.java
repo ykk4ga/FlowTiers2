@@ -30,6 +30,7 @@ public class AvatarRendererMixin {
 		FlowTiersClientState.cache().getIfFresh(player.getUUID()).ifPresent(stats -> {
 			Component suffix = FlowTierFormatter.compact(stats);
 			String suffixStr = suffix.getString();
+			if (suffixStr.isEmpty()) return;
 
 			if (state.nameTag != null && state.nameTag.getString().contains(suffixStr)) return;
 

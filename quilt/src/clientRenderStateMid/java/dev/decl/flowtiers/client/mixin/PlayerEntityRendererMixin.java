@@ -29,6 +29,8 @@ public class PlayerEntityRendererMixin {
 		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
 			Text suffix = FlowTierFormatter.compact(stats);
 			String suffixStr = suffix.getString();
+			if (suffixStr.isEmpty()) return;
+
 			Text currentName = renderName(player, state);
 
 			if (currentName != null && currentName.getString().contains(suffixStr)) return;

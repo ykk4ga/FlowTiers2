@@ -23,15 +23,18 @@ public class LunarPlayerEntityMixin {
 		if (!FlowTierClientConfig.nametagEnabled) return;
 
 		Text original = cir.getReturnValue();
-		if (FlowTierClientConfig.suppressRankedDuplicates && RankedMatchDetector.nameAlreadyHasTierInfo(original)) return;
+		if (FlowTierClientConfig.suppressRankedDuplicates && original != null) {
+			if (RankedMatchDetector.nameAlreadyHasTierInfo(original)) return;
+		}
 
 		PlayerEntity player = (PlayerEntity) (Object) this;
 		FlowTiersClientState.cache().fetch(player.getUuid());
 		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
 			Text suffix = FlowTierFormatter.compact(stats);
-			String originalString = original == null ? "" : original.getString();
 			String suffixString = suffix.getString();
 			if (suffixString.isEmpty()) return;
+
+			String originalString = original == null ? "" : original.getString();
 			if (originalString.contains(suffixString)) return;
 
 			Text baseName = original == null ? player.getName() : original;

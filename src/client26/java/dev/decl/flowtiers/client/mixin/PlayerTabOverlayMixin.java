@@ -30,6 +30,7 @@ public class PlayerTabOverlayMixin {
 		FlowTiersClientState.cache().getIfFresh(pid).ifPresent(stats -> {
 			Component suffix = FlowTierFormatter.compact(stats);
 			String suffixStr = suffix.getString();
+			if (suffixStr.isEmpty()) return;
 
 			if (cir.getReturnValue() != null && cir.getReturnValue().getString().contains(suffixStr)) return;
 

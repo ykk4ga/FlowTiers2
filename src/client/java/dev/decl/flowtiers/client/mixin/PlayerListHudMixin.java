@@ -23,6 +23,10 @@ public class PlayerListHudMixin {
 		FlowTiersClientState.cache().fetch(FlowTierMinecraftCompat.profileId(entry.getProfile()));
 		FlowTiersClientState.cache().getIfFresh(FlowTierMinecraftCompat.profileId(entry.getProfile())).ifPresent(stats -> {
 			Text suffix = FlowTierFormatter.compact(stats);
+			String suffixStr = suffix.getString();
+			if (suffixStr.isEmpty()) return;
+			if (cir.getReturnValue().getString().contains(suffixStr)) return;
+
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				cir.setReturnValue(suffix.copy()
 						.append(Text.literal(" "))

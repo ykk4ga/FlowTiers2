@@ -1,5 +1,8 @@
 package dev.decl.flowtiers.client;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.decl.flowtiers.client.leaderboard.FlowTierLeaderboardScreen;
 import dev.decl.flowtiers.client.leaderboard.FlowTierPlayerStatsScreen;
@@ -9,7 +12,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public final class FlowTierKeybinds {
@@ -22,15 +24,8 @@ public final class FlowTierKeybinds {
 			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP"
     };
 
-    private static KeyMapping.Category cachedCategory = null;
-
     private static KeyMapping.Category category() {
-        if (cachedCategory == null) {
-            cachedCategory = KeyMapping.Category.register(
-                    Identifier.fromNamespaceAndPath("flowtiers", "category")
-            );
-        }
-        return cachedCategory;
+        return KeyMapping.Category.MISC;
     }
 
     public static void register() {
@@ -63,6 +58,7 @@ public final class FlowTierKeybinds {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            installIntoOptions(client.options, leaderboard, cycleForward, cycleBack, viewStats);
             unbindAdvancementsIfConflicting(client, leaderboard);
 
             while (leaderboard.consumeClick()) {
@@ -148,5 +144,41 @@ public final class FlowTierKeybinds {
             client.options.keyAdvancements.setKey(InputConstants.UNKNOWN);
             client.options.save();
         }
+    }
+
+    private static boolean installedIntoOptions = false;
+
+    private static void installIntoOptions(net.minecraft.client.Options options, KeyMapping... bindings) {
+        if (installedIntoOptions || options == null) return;
+
+        for (Field field : net.minecraft.client.Options.class.getDeclaredFields()) {
+            if (field.getType() != KeyMapping[].class) continue;
+
+            try {
+                field.setAccessible(true);
+                KeyMapping[] existing = (KeyMapping[]) field.get(options);
+                if (existing == null || existing.length < 20) continue;
+                if (contains(existing, bindings[0])) {
+                    installedIntoOptions = true;
+                    return;
+                }
+
+                KeyMapping[] expanded = Arrays.copyOf(existing, existing.length + bindings.length);
+                System.arraycopy(bindings, 0, expanded, existing.length, bindings.length);
+                field.set(options, expanded);
+                KeyMapping.resetMapping();
+                installedIntoOptions = true;
+                return;
+            } catch (ReflectiveOperationException ignored) {
+            }
+        }
+    }
+
+    private static boolean contains(KeyMapping[] existing, KeyMapping binding) {
+        String name = binding.getName();
+        for (KeyMapping key : existing) {
+            if (key != null && name.equals(key.getName())) return true;
+        }
+        return false;
     }
 }

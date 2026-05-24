@@ -98,7 +98,8 @@ public final class FlowTierFormatter {
 		MutableText text = Text.empty();
 		boolean wrotePart = false;
 
-		for (FlowTierClientConfig.NametagComponent component : FlowTierClientConfig.nametagOrder) {
+		for (int componentIndex = 0; componentIndex < FlowTierClientConfig.nametagOrder.size(); componentIndex++) {
+			FlowTierClientConfig.NametagComponent component = FlowTierClientConfig.nametagOrder.get(componentIndex);
 			switch (component) {
 				case GAMEMODE_ICON -> {
 					if (!FlowTierClientConfig.gamemodeIconEnabled) continue;
@@ -116,9 +117,14 @@ public final class FlowTierFormatter {
 					}
 					wrotePart = true;
 				}
+				case SEPARATOR -> {
+					if (!FlowTierClientConfig.separatorEnabled) continue;
+					if (!wrotePart) continue; // no leading separator
+					text.append(Text.literal(" |").formatted(Formatting.DARK_GRAY));
+				}
 				case ELO -> {
 					if (!FlowTierClientConfig.eloEnabled) continue;
-					if (wrotePart) text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
+					if (wrotePart && !endsWithSeparator(text)) text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
 					Style eloStyle = Style.EMPTY.withColor(FlowTierClientConfig.coloredElo ? ratingColor(ladder.totalRating()) : 0xFFFFFF);
 					text.append(Text.literal(Integer.toString(ladder.totalRating())).setStyle(eloStyle));
 					if (FlowTierClientConfig.eloLabelEnabled)
@@ -127,7 +133,7 @@ public final class FlowTierFormatter {
 				}
 				case POSITION -> {
 					if (!FlowTierClientConfig.positionEnabled || !ladder.hasPosition()) continue;
-					if (wrotePart) text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
+					if (wrotePart && !endsWithSeparator(text)) text.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
 					int posColor = FlowTierClientConfig.coloredPosition ? positionColor(ladder.tierLabel(), ladder.position()) : 0xFFFFFF;
 					if (FlowTierClientConfig.positionLabelEnabled)
 						text.append(Text.literal("#").setStyle(Style.EMPTY.withColor(posColor)));
@@ -137,6 +143,32 @@ public final class FlowTierFormatter {
 			}
 		}
 		return text;
+	}
+
+	private static boolean endsWithSeparator(Text text) {
+		return text.getString().endsWith(" | ");
+	}
+
+	private static boolean hasFollowingNametagPart(FlowTierStats.LadderStats ladder, int startIndex) {
+		for (int i = startIndex; i < FlowTierClientConfig.nametagOrder.size(); i++) {
+			switch (FlowTierClientConfig.nametagOrder.get(i)) {
+				case GAMEMODE_ICON -> {
+					if (FlowTierClientConfig.gamemodeIconEnabled) return true;
+				}
+				case TIER -> {
+					if (FlowTierClientConfig.tierEnabled) return true;
+				}
+				case ELO -> {
+					if (FlowTierClientConfig.eloEnabled) return true;
+				}
+				case POSITION -> {
+					if (FlowTierClientConfig.positionEnabled && ladder.hasPosition()) return true;
+				}
+				case SEPARATOR -> {
+				}
+			}
+		}
+		return false;
 	}
 
 	private static String tierLabel(FlowTierStats.LadderStats ladder) {

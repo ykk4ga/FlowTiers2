@@ -32,6 +32,8 @@ public class PlayerEntityRendererMixin {
 		FlowTiersClientState.cache().fetch(player.getUuid());
 		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
 			Text suffix = FlowTierFormatter.compact(stats);
+			if (suffix.getString().isEmpty()) return;
+
 			Text name;
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				name = suffix.copy().append(Text.literal(" ")).append(text);

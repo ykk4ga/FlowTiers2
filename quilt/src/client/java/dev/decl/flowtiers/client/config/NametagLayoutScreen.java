@@ -127,6 +127,7 @@ public class NametagLayoutScreen extends Screen {
         return switch (comp) {
             case GAMEMODE_ICON -> FlowTierClientConfig.gamemodeIconEnabled;
             case TIER -> FlowTierClientConfig.tierEnabled;
+            case SEPARATOR -> FlowTierClientConfig.separatorEnabled;
             case ELO -> FlowTierClientConfig.eloEnabled;
             case POSITION -> FlowTierClientConfig.positionEnabled;
         };
@@ -136,6 +137,7 @@ public class NametagLayoutScreen extends Screen {
         switch (comp) {
             case GAMEMODE_ICON -> FlowTierClientConfig.gamemodeIconEnabled = !FlowTierClientConfig.gamemodeIconEnabled;
             case TIER -> FlowTierClientConfig.tierEnabled = !FlowTierClientConfig.tierEnabled;
+            case SEPARATOR -> FlowTierClientConfig.separatorEnabled = !FlowTierClientConfig.separatorEnabled;
             case ELO -> FlowTierClientConfig.eloEnabled = !FlowTierClientConfig.eloEnabled;
             case POSITION -> FlowTierClientConfig.positionEnabled = !FlowTierClientConfig.positionEnabled;
         }
@@ -145,6 +147,7 @@ public class NametagLayoutScreen extends Screen {
         return switch (comp) {
             case GAMEMODE_ICON -> "Gamemode Icon";
             case TIER -> "Tier";
+            case SEPARATOR -> "Separator";
             case ELO -> "SR";
             case POSITION -> "Position";
         };
