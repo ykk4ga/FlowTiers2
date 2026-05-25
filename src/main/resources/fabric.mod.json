@@ -5,7 +5,7 @@
   "name": "FlowTiers",
   "description": "Client-side FlowPvP ranked stats on commands, HUD, nametags, and the tab list.",
   "authors": [
-    "decl",
+    "fecl",
     "micahcode"
   ],
   "contact": {
@@ -17,13 +17,13 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "dev.decl.flowtiers.FlowTiers"
+      "dev.fecl.flowtiers.FlowTiers"
     ],
     "client": [
-      "dev.decl.flowtiers.client.FlowTiersClient"
+      "dev.fecl.flowtiers.client.FlowTiersClient"
     ],
     "modmenu": [
-      "dev.decl.flowtiers.client.config.FlowTiersModMenu"
+      "dev.fecl.flowtiers.client.config.FlowTiersModMenu"
     ]
   },
   "mixins": [

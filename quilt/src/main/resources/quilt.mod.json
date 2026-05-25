@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "quilt_loader": {
-    "group": "dev.decl",
+    "group": "dev.fecl",
     "id": "${mod_id}",
     "version": "${version}",
     "metadata": {
@@ -17,9 +17,9 @@
     },
     "intermediate_mappings": "net.fabricmc:intermediary",
     "entrypoints": {
-      "init": "dev.decl.flowtiers.FlowTiers",
-      "client_init": "dev.decl.flowtiers.client.FlowTiersClient",
-      "modmenu": "dev.decl.flowtiers.client.config.FlowTiersModMenu"
+      "init": "dev.fecl.flowtiers.FlowTiers",
+      "client_init": "dev.fecl.flowtiers.client.FlowTiersClient",
+      "modmenu": "dev.fecl.flowtiers.client.config.FlowTiersModMenu"
     },
     "depends": [
       {

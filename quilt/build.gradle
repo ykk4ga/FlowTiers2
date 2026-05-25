@@ -49,8 +49,8 @@ loom {
 sourceSets.client.java {
 	srcDir "src/${targetConfig.clickSourceSet}/java"
 	srcDir "src/${targetConfig.renderSourceSet}/java"
-	exclude "dev/decl/flowtiers/client/config/HudPlacementEntry.java"
-	exclude "dev/decl/flowtiers/client/config/NametagLayoutButtonEntry.java"
+	exclude "dev/fecl/flowtiers/client/config/HudPlacementEntry.java"
+	exclude "dev/fecl/flowtiers/client/config/NametagLayoutButtonEntry.java"
 }
 
 dependencies {

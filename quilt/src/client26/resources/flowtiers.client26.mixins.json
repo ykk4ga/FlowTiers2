@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "dev.decl.flowtiers.client.mixin",
+	"package": "dev.fecl.flowtiers.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
 		"AvatarRendererMixin",

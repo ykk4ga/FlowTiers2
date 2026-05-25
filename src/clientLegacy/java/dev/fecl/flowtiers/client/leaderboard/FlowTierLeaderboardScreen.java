@@ -1,0 +1,342 @@
+package dev.fecl.flowtiers.client.leaderboard;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
+
+import dev.fecl.flowtiers.client.FlowTierClientConfig;
+import dev.fecl.flowtiers.client.FlowTierFormatter;
+import dev.fecl.flowtiers.client.FlowTierStats;
+import dev.fecl.flowtiers.client.FlowTiersClientState;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.text.Text;
+
+public final class FlowTierLeaderboardScreen extends Screen {
+    private static final String[] LADDERS = {
+            "GLOBAL", "SWORD", "AXE", "UHC", "VANILLA",
+            "MACE", "DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP"
+    };
+    private static final int ROW_HEIGHT = 13;
+
+    private final FlowTierLeaderboardClient leaderboardClient;
+    private String ladder = "GLOBAL";
+    private int scrollOffset;
+    private TextFieldWidget searchField;
+    private String searchQuery = "";
+    private String searchStatus = "";
+    private FlowTierLeaderboardClient.Entry resolvedSearchEntry;
+    private String pendingResolveName = "";
+
+    public FlowTierLeaderboardScreen(FlowTierLeaderboardClient leaderboardClient) {
+        super(Text.literal("FlowTiers Leaderboard"));
+        this.leaderboardClient = leaderboardClient;
+    }
+
+    @Override
+    protected void init() {
+        clearChildren();
+        int tabWidth = 68;
+        int tabHeight = 18;
+        int gap = 6;
+        int panelLeft = panelLeft();
+        int startX = panelLeft + 8;
+
+        for (int i = 0; i < LADDERS.length; i++) {
+            String tabLadder = LADDERS[i];
+            int row = i / 5;
+            int col = i % 5;
+            int x = startX + col * (tabWidth + gap);
+            int y = 8 + row * (tabHeight + 4);
+            ButtonWidget tab = ButtonWidget.builder(Text.literal((tabLadder.equals(ladder) ? "> " : "") + tabButtonLabel(tabLadder)), button -> {
+                ladder = tabLadder;
+                scrollOffset = 0;
+                leaderboardClient.load(ladder);
+                init();
+            }).dimensions(x, y, tabWidth, tabHeight).build();
+            tab.active = !tabLadder.equals(ladder);
+            addDrawableChild(tab);
+        }
+
+        searchField = new TextFieldWidget(textRenderer, panelLeft + 8, 58, 220, 18, Text.literal("Search player"));
+        searchField.setMaxLength(32);
+        searchField.setPlaceholder(Text.literal("Search player..."));
+        searchField.setText(searchQuery);
+        searchField.setChangedListener(value -> {
+            searchQuery = value.trim();
+            searchStatus = "";
+            resolvedSearchEntry = null;
+            resolveSearchIfNeeded(searchQuery);
+        });
+        addDrawableChild(searchField);
+        addDrawableChild(ButtonWidget.builder(Text.literal("Search"), button -> searchPlayer())
+                .dimensions(panelLeft + 234, 58, 68, 18)
+                .build());
+        leaderboardClient.load(ladder);
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        context.fill(0, 0, width, height, 0xE0101420);
+        super.render(context, mouseX, mouseY, delta);
+
+        FlowTierLeaderboardClient.PageState state = leaderboardClient.state(ladder);
+        List<FlowTierLeaderboardClient.Entry> entries = state.entries();
+        List<FlowTierLeaderboardClient.Entry> visibleEntries = visibleEntries(entries);
+        int panelLeft = panelLeft();
+        int panelRight = panelRight();
+        int top = tableTop();
+        int bottom = height - 28;
+
+        context.fill(panelLeft, top - 18, panelRight, bottom, 0xAA080B12);
+        context.fill(panelLeft, top - 18, panelRight, top - 2, 0xCC111827);
+        context.drawTextWithShadow(textRenderer, "#", panelLeft + 10, top - 14, 0xFFB5C7E8);
+        context.drawTextWithShadow(textRenderer, "Player", panelLeft + 46, top - 14, 0xFFB5C7E8);
+        context.drawTextWithShadow(textRenderer, "Tier", panelRight - 132, top - 14, 0xFFB5C7E8);
+        context.drawTextWithShadow(textRenderer, "SR", panelRight - 54, top - 14, 0xFFB5C7E8);
+
+        if (resolvedSearchEntry != null) {
+            context.drawTextWithShadow(textRenderer, "Found: " + resolvedSearchEntry.name(), panelLeft + 310, 63, 0xFF55FF55);
+        } else if (searchStatus != null && !searchStatus.isBlank()) {
+            context.drawTextWithShadow(textRenderer, searchStatus, panelLeft + 310, 63, 0xFF7C8BA1);
+        }
+
+        if (visibleEntries.isEmpty()) {
+            String message = state.error() != null ? state.error() : state.loading() ? "Loading..." : "No leaderboard data.";
+            if (!entries.isEmpty() && !searchText().isBlank()) {
+                message = resolvedSearchEntry == null ? "No loaded rows match. Resolving player..." : "Press Search to open found player.";
+            }
+            context.drawCenteredTextWithShadow(textRenderer, message, width / 2, top + 28, 0xFFAAAAAA);
+            return;
+        }
+
+        int maxScroll = Math.max(0, visibleEntries.size() * ROW_HEIGHT - (bottom - top));
+        scrollOffset = Math.min(scrollOffset, maxScroll);
+
+        context.enableScissor(panelLeft, top, panelRight, bottom);
+        for (int i = 0; i < visibleEntries.size(); i++) {
+            FlowTierLeaderboardClient.Entry entry = visibleEntries.get(i);
+            int y = top + i * ROW_HEIGHT - scrollOffset;
+            if (y + ROW_HEIGHT < top || y > bottom) continue;
+
+            boolean hovered = mouseX >= panelLeft && mouseX <= panelRight && mouseY >= y && mouseY < y + ROW_HEIGHT;
+            if (hovered) {
+                context.fill(panelLeft + 2, y - 1, panelRight - 2, y + ROW_HEIGHT - 1, 0x553B82F6);
+            } else if (i % 2 == 0) {
+                context.fill(panelLeft + 2, y - 1, panelRight - 2, y + ROW_HEIGHT - 1, 0x22000000);
+            }
+
+            String tier = tierFor(entry);
+            context.drawTextWithShadow(textRenderer, entry.position() > 0 ? Integer.toString(entry.position()) : "-", panelLeft + 10, y + 2, rankColor(entry.position()));
+            context.drawTextWithShadow(textRenderer, trim(entry.name(), 18), panelLeft + 46, y + 2, nameColor(entry.position()));
+            context.drawTextWithShadow(textRenderer, trim(tier, 12), panelRight - 132, y + 2, tierColor(tier, entry.position()));
+            context.drawTextWithShadow(textRenderer, entry.elo() + " SR", panelRight - 54, y + 2, eloColor(entry.elo()));
+        }
+        context.disableScissor();
+
+        if (state.loading()) {
+            context.drawCenteredTextWithShadow(textRenderer, "Loading more...", width / 2, height - 18, 0xFF7C8BA1);
+        } else {
+            context.drawTextWithShadow(textRenderer, entries.size() + " players | page " + Math.max(1, state.page()), panelLeft, height - 18, 0xFF7C8BA1);
+            context.drawTextWithShadow(textRenderer, "Scroll down to load more. Esc closes.", panelRight - 208, height - 18, 0xFF7C8BA1);
+        }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        scrollOffset -= (int) (verticalAmount * 18);
+        scrollOffset = Math.max(0, scrollOffset);
+        FlowTierLeaderboardClient.PageState state = leaderboardClient.state(ladder);
+        int visibleRows = Math.max(1, (height - 110) / ROW_HEIGHT);
+        if (searchText().isBlank() && scrollOffset > Math.max(0, state.entries().size() - visibleRows - 4) * ROW_HEIGHT) {
+            leaderboardClient.loadMore(ladder);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            FlowTierLeaderboardClient.Entry entry = rowAt(mouseX, mouseY);
+            if (entry != null && client != null) {
+                String autoLadder = ladder.equals("GLOBAL") ? null : ladder;
+                client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name(), autoLadder));
+                return true;
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean shouldPause() { return false; }
+
+    private FlowTierLeaderboardClient.Entry rowAt(double mouseX, double mouseY) {
+        int panelLeft = panelLeft();
+        int panelRight = panelRight();
+        int top = tableTop();
+        int bottom = height - 28;
+        if (mouseX < panelLeft || mouseX > panelRight || mouseY < top || mouseY > bottom) return null;
+        int index = ((int) mouseY - top + scrollOffset) / ROW_HEIGHT;
+        List<FlowTierLeaderboardClient.Entry> entries = visibleEntries(leaderboardClient.state(ladder).entries());
+        return index >= 0 && index < entries.size() ? entries.get(index) : null;
+    }
+
+    private int panelLeft() { return Math.max(20, width / 2 - 190); }
+    private int panelRight() { return Math.min(width - 20, width / 2 + 190); }
+    private int tableTop() { return 96; }
+
+    private List<FlowTierLeaderboardClient.Entry> visibleEntries(List<FlowTierLeaderboardClient.Entry> entries) {
+        String query = searchText();
+        if (query.isBlank()) return entries;
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        List<FlowTierLeaderboardClient.Entry> filtered = entries.stream()
+                .filter(entry -> entry.name().toLowerCase(Locale.ROOT).contains(lowerQuery))
+                .toList();
+        if (!filtered.isEmpty() || resolvedSearchEntry == null) return filtered;
+        return List.of(resolvedSearchEntry);
+    }
+
+    private String searchText() {
+        return searchField == null ? searchQuery : searchField.getText().trim();
+    }
+
+    private void searchPlayer() {
+        String query = searchText();
+        if (query.isBlank() || client == null) return;
+        String autoLadder = ladder.equals("GLOBAL") ? null : ladder;
+
+        if (resolvedSearchEntry != null && resolvedSearchEntry.name().equalsIgnoreCase(query)) {
+            client.setScreen(new FlowTierPlayerStatsScreen(this, resolvedSearchEntry.uuid(), resolvedSearchEntry.name(), autoLadder));
+            return;
+        }
+
+        for (FlowTierLeaderboardClient.Entry entry : leaderboardClient.state(ladder).entries()) {
+            if (entry.name().equalsIgnoreCase(query)) {
+                client.setScreen(new FlowTierPlayerStatsScreen(this, entry.uuid(), entry.name(), autoLadder));
+                return;
+            }
+        }
+
+        searchStatus = "Searching...";
+        try {
+            UUID uuid = parseUuid(query);
+            client.setScreen(new FlowTierPlayerStatsScreen(this, uuid.toString(), query, autoLadder));
+            return;
+        } catch (IllegalArgumentException ignored) {}
+
+        FlowTiersClientState.profileResolver().resolve(query).thenAccept(result -> {
+            if (client == null) return;
+            client.execute(() -> {
+                if (result.status() == dev.fecl.flowtiers.client.MojangProfileResolver.Status.FOUND) {
+                    client.setScreen(new FlowTierPlayerStatsScreen(this, result.profile().uuid().toString(), result.profile().name(), autoLadder));
+                } else if (result.status() == dev.fecl.flowtiers.client.MojangProfileResolver.Status.NOT_FOUND) {
+                    searchStatus = "Player not found.";
+                } else {
+                    searchStatus = "Search failed.";
+                }
+            });
+        });
+    }
+
+    private void resolveSearchIfNeeded(String query) {
+        if (query.length() < 3 || query.equalsIgnoreCase(pendingResolveName)) return;
+
+        for (FlowTierLeaderboardClient.Entry entry : leaderboardClient.state(ladder).entries()) {
+            if (entry.name().equalsIgnoreCase(query)) {
+                resolvedSearchEntry = entry;
+                searchStatus = "";
+                return;
+            }
+        }
+
+        pendingResolveName = query;
+        searchStatus = "Resolving...";
+        FlowTiersClientState.profileResolver().resolve(query).thenAccept(result -> {
+            if (client == null) return;
+            client.execute(() -> {
+                if (!query.equals(searchText())) return;
+                if (result.status() == dev.fecl.flowtiers.client.MojangProfileResolver.Status.FOUND) {
+                    searchStatus = "Fetching stats...";
+                    FlowTiersClientState.cache().fetch(result.profile().uuid()).thenAccept(stats -> {
+                        if (client == null) return;
+                        client.execute(() -> {
+                            if (!query.equals(searchText())) return;
+                            int elo = 0;
+                            int position = 0;
+                            if (stats != null) {
+                                FlowTierStats.LadderStats ladderStats = stats.ladder(ladder)
+                                        .or(() -> stats.displayLadder())
+                                        .orElse(null);
+                                if (ladderStats != null) {
+                                    elo = ladderStats.totalRating();
+                                    position = ladderStats.position();
+                                }
+                            }
+                            if (stats == null) {
+                                resolvedSearchEntry = null;
+                                searchStatus = "Player has not played FlowPvP ranked.";
+                                return;
+                            }
+                            resolvedSearchEntry = new FlowTierLeaderboardClient.Entry(position, result.profile().uuid().toString(), result.profile().name(), elo);
+                            searchStatus = "";
+                        });
+                    });
+                } else if (result.status() == dev.fecl.flowtiers.client.MojangProfileResolver.Status.NOT_FOUND) {
+                    searchStatus = "Player not found.";
+                } else {
+                    searchStatus = "Search failed.";
+                }
+            });
+        });
+    }
+
+    private static UUID parseUuid(String value) {
+        if (value.length() != 32) return UUID.fromString(value);
+        return UUID.fromString(value.replaceFirst(
+                "([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{12})",
+                "$1-$2-$3-$4-$5"
+        ));
+    }
+
+    private static String tabButtonLabel(String ladder) {
+        return switch (ladder) {
+            case "GLOBAL" -> "Global";
+            case "DIAMOND_POT" -> "Pot";
+            case "NETHERITE_OP" -> "NethOP";
+            case "DIAMOND_SMP" -> "D.SMP";
+            default -> FlowTierFormatter.displayName(ladder);
+        };
+    }
+
+    private static String tierFor(FlowTierLeaderboardClient.Entry entry) {
+        return new FlowTierStats.LadderStats("LEADERBOARD", entry.elo(), 1, 0, 0, 1, null, entry.position()).tierLabel();
+    }
+
+    private static String trim(String value, int max) {
+        return value.length() <= max ? value : value.substring(0, max - 1) + "...";
+    }
+
+    private static int rankColor(int rank) {
+        if (rank == 1) return 0xFFFFD700;
+        if (rank == 2) return 0xFFC0C0C0;
+        if (rank == 3) return 0xFFCD7F32;
+        if (rank <= 10) return 0xFFFFFF88;
+        return 0xFF9CA3AF;
+    }
+
+    private static int nameColor(int rank) {
+        if (rank <= 3) return rankColor(rank);
+        return 0xFFFFFFFF;
+    }
+
+    private static int tierColor(String tier, int position) {
+        int color = dev.fecl.flowtiers.client.FlowTierRankSystem.tierColor(tier, position);
+        return color == 0xFFFFFF ? 0xFFAAAAAA : 0xFF000000 | color;
+    }
+
+    private static int eloColor(int elo) {
+        return 0xFF000000 | dev.fecl.flowtiers.client.FlowTierRankSystem.ratingColor(elo);
+    }
+}
