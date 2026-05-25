@@ -49,6 +49,11 @@ public class PlayerTabOverlayMixin {
 	private static Component joiner(Component left, Component right) {
 		String leftValue = left.getString();
 		String rightValue = right.getString();
-		return leftValue.endsWith(" ") || rightValue.startsWith(" ") ? Component.empty() : Component.literal(" ");
+		return hasSeparatorEdge(leftValue, rightValue) || leftValue.endsWith(" ") || rightValue.startsWith(" ")
+				? Component.empty() : Component.literal(" ");
+	}
+
+	private static boolean hasSeparatorEdge(String left, String right) {
+		return left.endsWith("|") || right.startsWith("|");
 	}
 }

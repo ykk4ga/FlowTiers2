@@ -102,7 +102,7 @@ public final class FlowTierFormatter {
 				}
 				case SEPARATOR -> {
 					if (!FlowTierClientConfig.separatorEnabled) continue;
-					if (!endsWithSeparator(text)) text.append(separator(text.getString().isEmpty() ? "| " : " | "));
+					if (!endsWithSeparator(text)) text.append(separator(text.getString().isEmpty() ? "|" : " |"));
 					wrotePart = true;
 				}
 				case ELO -> {

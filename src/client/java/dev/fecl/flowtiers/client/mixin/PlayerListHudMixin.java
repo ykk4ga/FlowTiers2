@@ -42,6 +42,11 @@ public class PlayerListHudMixin {
 	private static Text joiner(Text left, Text right) {
 		String leftValue = left.getString();
 		String rightValue = right.getString();
-		return leftValue.endsWith(" ") || rightValue.startsWith(" ") ? Text.empty() : Text.literal(" ");
+		return hasSeparatorEdge(leftValue, rightValue) || leftValue.endsWith(" ") || rightValue.startsWith(" ")
+				? Text.empty() : Text.literal(" ");
+	}
+
+	private static boolean hasSeparatorEdge(String left, String right) {
+		return left.endsWith("|") || right.startsWith("|");
 	}
 }
