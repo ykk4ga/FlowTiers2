@@ -16,6 +16,7 @@ public class FlowTiersClient implements ClientModInitializer {
 		FlowTierCommands.register(cache);
 		FlowTierHud.register(cache);
 		FlowTierKeybinds.register();
+		FlowTierVersionChecker.register();
 
 		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
 			if (message.getString().contains("SR Change")) {

@@ -22,6 +22,7 @@ public final class FlowTierClientConfig {
 	public static boolean hudEnabled = true;
 	public static boolean nametagEnabled = true;
 	public static boolean tabListEnabled = true;
+	public static boolean versionCheckEnabled = true;
 	public static String preferredLadder = "SWORD";
 	public static DisplayMode displayMode = DisplayMode.PREFERRED_LADDER;
 	public static boolean rankSectionEnabled = true;
@@ -67,6 +68,7 @@ public final class FlowTierClientConfig {
 			hudEnabled = data.hudEnabled;
 			nametagEnabled = data.nametagEnabled;
 			tabListEnabled = data.tabListEnabled;
+			versionCheckEnabled = data.versionCheckEnabled == null || data.versionCheckEnabled;
 			preferredLadder = normalizeLadder(data.preferredLadder == null ? "SWORD" : data.preferredLadder);
 			displayMode = DisplayMode.fromName(data.displayMode);
 			rankSectionEnabled = data.rankSectionEnabled;
@@ -197,6 +199,7 @@ public final class FlowTierClientConfig {
 		boolean hudEnabled = true;
 		boolean nametagEnabled = true;
 		boolean tabListEnabled = true;
+		Boolean versionCheckEnabled = true;
 		String preferredLadder = "SWORD";
 		String displayMode = DisplayMode.PREFERRED_LADDER.name();
 		boolean rankSectionEnabled = true;
@@ -225,6 +228,7 @@ public final class FlowTierClientConfig {
 			data.hudEnabled = FlowTierClientConfig.hudEnabled;
 			data.nametagEnabled = FlowTierClientConfig.nametagEnabled;
 			data.tabListEnabled = FlowTierClientConfig.tabListEnabled;
+			data.versionCheckEnabled = FlowTierClientConfig.versionCheckEnabled;
 			data.preferredLadder = FlowTierClientConfig.preferredLadder;
 			data.displayMode = FlowTierClientConfig.displayMode.name();
 			data.rankSectionEnabled = FlowTierClientConfig.gamemodeIconEnabled || FlowTierClientConfig.tierEnabled;

@@ -17,6 +17,7 @@ public class FlowTiersClient implements ClientModInitializer {
 		FlowTierCommands.register(cache);
 		FlowTierHud.register(cache);
 		FlowTierKeybinds.register();
+		FlowTierVersionChecker.register();
 		FlowTiers.LOGGER.info("FlowTiers 26.x client foundation initialized.");
 
 		ClientReceiveMessageEvents.GAME.register((message, overlay) -> {

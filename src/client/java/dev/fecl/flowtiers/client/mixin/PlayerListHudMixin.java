@@ -29,13 +29,19 @@ public class PlayerListHudMixin {
 
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				cir.setReturnValue(suffix.copy()
-						.append(Text.literal(" "))
+						.append(joiner(suffix, cir.getReturnValue()))
 						.append(cir.getReturnValue()));
 			} else {
 				cir.setReturnValue(cir.getReturnValue().copy()
-						.append(Text.literal(" "))
+						.append(joiner(cir.getReturnValue(), suffix))
 						.append(suffix));
 			}
 		});
+	}
+
+	private static Text joiner(Text left, Text right) {
+		String leftValue = left.getString();
+		String rightValue = right.getString();
+		return leftValue.endsWith(" ") || rightValue.startsWith(" ") ? Text.empty() : Text.literal(" ");
 	}
 }

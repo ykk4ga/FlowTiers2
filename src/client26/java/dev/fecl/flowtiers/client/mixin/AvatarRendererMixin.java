@@ -36,13 +36,19 @@ public class AvatarRendererMixin {
 
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				state.nameTag = suffix.copy()
-						.append(Component.literal(" "))
+						.append(joiner(suffix, state.nameTag == null ? Component.empty() : state.nameTag))
 						.append(state.nameTag == null ? Component.empty() : state.nameTag);
 			} else {
 				state.nameTag = (state.nameTag == null ? Component.empty() : state.nameTag.copy())
-						.append(Component.literal(" "))
+						.append(joiner(state.nameTag == null ? Component.empty() : state.nameTag, suffix))
 						.append(suffix);
 			}
 		});
+	}
+
+	private static Component joiner(Component left, Component right) {
+		String leftValue = left.getString();
+		String rightValue = right.getString();
+		return leftValue.endsWith(" ") || rightValue.startsWith(" ") ? Component.empty() : Component.literal(" ");
 	}
 }

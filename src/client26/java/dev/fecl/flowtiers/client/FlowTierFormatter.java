@@ -86,13 +86,13 @@ public final class FlowTierFormatter {
 			switch (component) {
 				case GAMEMODE_ICON -> {
 					if (!FlowTierClientConfig.gamemodeIconEnabled) continue;
-					if (wrotePart) text.append(Component.literal(" "));
+					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" "));
 					text.append(icon(ladder.ladder()));
 					wrotePart = true;
 				}
 				case TIER -> {
 					if (!FlowTierClientConfig.tierEnabled) continue;
-					if (wrotePart) text.append(Component.literal(" "));
+					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" "));
 					if (FlowTierClientConfig.coloredTier) {
 						text.append(Component.literal(tierLabel(ladder)).withStyle(s -> s.withColor(tierColor(ladder.tierLabel(), ladder.position()))));
 					} else {
@@ -102,9 +102,8 @@ public final class FlowTierFormatter {
 				}
 				case SEPARATOR -> {
 					if (!FlowTierClientConfig.separatorEnabled) continue;
-					if (!wrotePart) continue; // no leading separator
-					if (!hasFollowingNametagPart(ladder, componentIndex + 1)) continue;
-					if (!endsWithSeparator(text)) text.append(separator(" | "));
+					if (!endsWithSeparator(text)) text.append(separator(text.getString().isEmpty() ? "| " : " | "));
+					wrotePart = true;
 				}
 				case ELO -> {
 					if (!FlowTierClientConfig.eloEnabled) continue;
@@ -135,28 +134,6 @@ public final class FlowTierFormatter {
 
 	private static MutableComponent separator(String value) {
 		return Component.literal(value).withStyle(style -> style.withColor(SEPARATOR_COLOR));
-	}
-
-	private static boolean hasFollowingNametagPart(FlowTierStats.LadderStats ladder, int startIndex) {
-		for (int i = startIndex; i < FlowTierClientConfig.nametagOrder.size(); i++) {
-			switch (FlowTierClientConfig.nametagOrder.get(i)) {
-				case GAMEMODE_ICON -> {
-					if (FlowTierClientConfig.gamemodeIconEnabled) return true;
-				}
-				case TIER -> {
-					if (FlowTierClientConfig.tierEnabled) return true;
-				}
-				case ELO -> {
-					if (FlowTierClientConfig.eloEnabled) return true;
-				}
-				case POSITION -> {
-					if (FlowTierClientConfig.positionEnabled && ladder.hasPosition()) return true;
-				}
-				case SEPARATOR -> {
-				}
-			}
-		}
-		return false;
 	}
 
 	private static String tierLabel(FlowTierStats.LadderStats ladder) {

@@ -36,6 +36,10 @@ public final class FlowTiersConfigScreen {
 				.setNameProvider(value -> Component.literal(FlowTierFormatter.displayName(value)))
 				.setSaveConsumer(value -> FlowTierClientConfig.preferredLadder = FlowTierClientConfig.normalizeLadder(value))
 				.build());
+		general.addEntry(entries.startBooleanToggle(Component.literal("Check for updates"), FlowTierClientConfig.versionCheckEnabled)
+				.setDefaultValue(true)
+				.setSaveConsumer(value -> FlowTierClientConfig.versionCheckEnabled = value)
+				.build());
 
 		ConfigCategory overlay = builder.getOrCreateCategory(Component.literal("Nametag & Tab"));
 		overlay.addEntry(new NametagLayoutButtonEntry(parent));

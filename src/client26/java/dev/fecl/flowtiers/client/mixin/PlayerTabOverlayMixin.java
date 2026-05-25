@@ -36,13 +36,19 @@ public class PlayerTabOverlayMixin {
 
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				cir.setReturnValue(suffix.copy()
-						.append(Component.literal(" "))
+						.append(joiner(suffix, cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue()))
 						.append(cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue()));
 			} else {
 				cir.setReturnValue((cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue().copy())
-						.append(Component.literal(" "))
+						.append(joiner(cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue(), suffix))
 						.append(suffix));
 			}
 		});
+	}
+
+	private static Component joiner(Component left, Component right) {
+		String leftValue = left.getString();
+		String rightValue = right.getString();
+		return leftValue.endsWith(" ") || rightValue.startsWith(" ") ? Component.empty() : Component.literal(" ");
 	}
 }

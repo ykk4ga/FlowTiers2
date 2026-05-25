@@ -41,9 +41,15 @@ public class LunarPlayerEntityMixin {
 
 			Component baseName = original == null ? player.getName() : original;
 			Component name = FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT
-					? suffix.copy().append(Component.literal(" ")).append(baseName)
-					: baseName.copy().append(Component.literal(" ")).append(suffix);
+					? suffix.copy().append(joiner(suffix, baseName)).append(baseName)
+					: baseName.copy().append(joiner(baseName, suffix)).append(suffix);
 			cir.setReturnValue(name);
 		});
+	}
+
+	private static Component joiner(Component left, Component right) {
+		String leftValue = left.getString();
+		String rightValue = right.getString();
+		return leftValue.endsWith(" ") || rightValue.startsWith(" ") ? Component.empty() : Component.literal(" ");
 	}
 }
