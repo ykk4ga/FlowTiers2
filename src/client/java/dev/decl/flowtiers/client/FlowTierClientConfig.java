@@ -50,7 +50,7 @@ public final class FlowTierClientConfig {
 	public static List<NametagComponent> defaultNametagOrder() {
 		return new ArrayList<>(List.of(
 				NametagComponent.GAMEMODE_ICON, NametagComponent.TIER, NametagComponent.SEPARATOR,
-				NametagComponent.ELO, NametagComponent.POSITION
+				NametagComponent.ELO, NametagComponent.SEPARATOR, NametagComponent.POSITION
 		));
 	}
 
@@ -102,7 +102,7 @@ public final class FlowTierClientConfig {
 				nametagOrder = defaultNametagOrder();
 			}
 			separatorEnabled = data.separatorEnabled;
-			ensureSeparatorComponent();
+			normalizeNametagOrder();
 		} catch (IOException exception) {
 			FlowTiers.LOGGER.warn("Failed to load FlowTiers config.", exception);
 		}
@@ -153,11 +153,44 @@ public final class FlowTierClientConfig {
 		GAMEMODE_ICON, TIER, SEPARATOR, ELO, POSITION
 	}
 
-	private static void ensureSeparatorComponent() {
-		if (nametagOrder.contains(NametagComponent.SEPARATOR)) return;
+	public static void normalizeNametagOrder() {
+		nametagOrder = hasNametagPart(nametagOrder) ? new ArrayList<>(nametagOrder) : defaultNametagOrder();
+		ensureSeparatorComponents();
+	}
 
-		int tierIndex = nametagOrder.indexOf(NametagComponent.TIER);
-		nametagOrder.add(tierIndex >= 0 ? tierIndex + 1 : nametagOrder.size(), NametagComponent.SEPARATOR);
+	private static boolean hasNametagPart(List<NametagComponent> components) {
+		for (NametagComponent component : components) {
+			if (component != NametagComponent.SEPARATOR) return true;
+		}
+		return false;
+	}
+
+	private static void ensureSeparatorComponents() {
+		while (separatorCount() < 2) {
+			int positionIndex = nametagOrder.indexOf(NametagComponent.POSITION);
+			if (positionIndex > 0 && nametagOrder.get(positionIndex - 1) != NametagComponent.SEPARATOR) {
+				nametagOrder.add(positionIndex, NametagComponent.SEPARATOR);
+				continue;
+			}
+
+			int tierIndex = nametagOrder.indexOf(NametagComponent.TIER);
+			if (tierIndex >= 0 && tierIndex < nametagOrder.size() - 1
+					&& nametagOrder.get(tierIndex + 1) != NametagComponent.SEPARATOR) {
+				nametagOrder.add(tierIndex + 1, NametagComponent.SEPARATOR);
+			} else if (nametagOrder.isEmpty() || nametagOrder.get(0) != NametagComponent.SEPARATOR) {
+				nametagOrder.add(0, NametagComponent.SEPARATOR);
+			} else {
+				nametagOrder.add(NametagComponent.SEPARATOR);
+			}
+		}
+	}
+
+	private static int separatorCount() {
+		int count = 0;
+		for (NametagComponent component : nametagOrder) {
+			if (component == NametagComponent.SEPARATOR) count++;
+		}
+		return count;
 	}
 
 	private static final class Data {

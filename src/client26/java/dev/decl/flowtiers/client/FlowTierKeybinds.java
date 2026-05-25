@@ -1,6 +1,8 @@
 package dev.decl.flowtiers.client;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 import com.mojang.blaze3d.platform.InputConstants;
@@ -12,9 +14,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public final class FlowTierKeybinds {
+    private static KeyMapping.Category cachedCategory;
+
     private FlowTierKeybinds() {
     }
 
@@ -25,6 +30,33 @@ public final class FlowTierKeybinds {
     };
 
     private static KeyMapping.Category category() {
+        if (cachedCategory != null) return cachedCategory;
+
+        for (Method method : KeyMapping.Category.class.getDeclaredMethods()) {
+            if (!Modifier.isStatic(method.getModifiers())
+                    || method.getParameterCount() != 1
+                    || method.getReturnType() != KeyMapping.Category.class) {
+                continue;
+            }
+
+            Class<?> parameter = method.getParameterTypes()[0];
+            try {
+                method.setAccessible(true);
+                Object category = null;
+                if (parameter == Identifier.class) {
+                    category = method.invoke(null, Identifier.fromNamespaceAndPath("flowtiers", "flowtiers"));
+                } else if (parameter == String.class) {
+                    category = method.invoke(null, "flowtiers");
+                }
+
+                if (category instanceof KeyMapping.Category keyCategory) {
+                    cachedCategory = keyCategory;
+                    return cachedCategory;
+                }
+            } catch (ReflectiveOperationException ignored) {
+            }
+        }
+
         return KeyMapping.Category.MISC;
     }
 

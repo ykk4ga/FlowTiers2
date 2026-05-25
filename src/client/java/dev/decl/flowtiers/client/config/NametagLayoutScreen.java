@@ -156,6 +156,7 @@ public class NametagLayoutScreen extends Screen {
     @Override
     public void close() {
         FlowTierClientConfig.nametagOrder = new ArrayList<>(order);
+        FlowTierClientConfig.normalizeNametagOrder();
         FlowTierClientConfig.save();
         if (client != null) client.setScreen(parent);
     }

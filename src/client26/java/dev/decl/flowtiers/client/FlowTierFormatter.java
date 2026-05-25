@@ -14,6 +14,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.client.Minecraft;
 
 public final class FlowTierFormatter {
+	private static final int SEPARATOR_COLOR = 0xABABAB;
+
 	private FlowTierFormatter() {}
 
 	public static Component compact(FlowTierStats stats) {
@@ -62,16 +64,16 @@ public final class FlowTierFormatter {
 				.append(Component.literal(displayName(ladder.ladder())).withStyle(ChatFormatting.AQUA))
 				.append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
 				.append(Component.literal(ladder.tierLabel()).withStyle(ChatFormatting.GOLD))
-				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
+				.append(separator(" | "))
 				.append(Component.literal(ratingText(ladder.totalRating())).withStyle(s -> s.withColor(ratingColor(ladder.totalRating()))))
-				.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY))
+				.append(separator(" | "))
 				.append(Component.literal(ladder.wins() + "W/" + ladder.losses() + "L").withStyle(ChatFormatting.WHITE))
 				.append(positionDetails(ladder));
 	}
 
 	private static Component positionDetails(FlowTierStats.LadderStats ladder) {
 		if (!ladder.hasPosition()) return Component.empty();
-		return Component.literal(" | #").withStyle(ChatFormatting.GRAY)
+		return separator(" | #")
 				.append(Component.literal(Integer.toString(ladder.position())).withStyle(ChatFormatting.WHITE));
 	}
 
@@ -101,11 +103,12 @@ public final class FlowTierFormatter {
 				case SEPARATOR -> {
 					if (!FlowTierClientConfig.separatorEnabled) continue;
 					if (!wrotePart) continue; // no leading separator
-					text.append(Component.literal(" |").withStyle(ChatFormatting.DARK_GRAY));
+					if (!hasFollowingNametagPart(ladder, componentIndex + 1)) continue;
+					if (!endsWithSeparator(text)) text.append(separator(" | "));
 				}
 				case ELO -> {
 					if (!FlowTierClientConfig.eloEnabled) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" "));
 					int color = FlowTierClientConfig.coloredElo ? ratingColor(ladder.totalRating()) : 0xFFFFFF;					text.append(Component.literal(Integer.toString(ladder.totalRating())).withStyle(s -> s.withColor(color)));
 					if (FlowTierClientConfig.eloLabelEnabled)
 						text.append(Component.literal(" " + FlowTierRankSystem.RATING_LABEL).withStyle(s -> s.withColor(color)));
@@ -113,7 +116,7 @@ public final class FlowTierFormatter {
 				}
 				case POSITION -> {
 					if (!FlowTierClientConfig.positionEnabled || !ladder.hasPosition()) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" "));
 					int posColor = FlowTierClientConfig.coloredPosition ? positionColor(ladder.tierLabel(), ladder.position()) : 0xFFFFFF;
 					if (FlowTierClientConfig.positionLabelEnabled)
 						text.append(Component.literal("#").withStyle(s -> s.withColor(posColor)));
@@ -126,7 +129,12 @@ public final class FlowTierFormatter {
 	}
 
 	private static boolean endsWithSeparator(Component text) {
-		return text.getString().endsWith(" | ");
+		String value = text.getString();
+		return value.endsWith(" | ") || value.endsWith(" |");
+	}
+
+	private static MutableComponent separator(String value) {
+		return Component.literal(value).withStyle(style -> style.withColor(SEPARATOR_COLOR));
 	}
 
 	private static boolean hasFollowingNametagPart(FlowTierStats.LadderStats ladder, int startIndex) {

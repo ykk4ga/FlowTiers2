@@ -12,7 +12,7 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 
 public final class FlowTierKeybinds {
-	private static final String CATEGORY = "key.categories.misc";
+	private static final String CATEGORY = "key.categories.flowtiers";
 
 	private FlowTierKeybinds() {
 	}

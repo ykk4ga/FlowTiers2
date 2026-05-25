@@ -154,6 +154,7 @@ public class NametagLayoutScreen extends Screen {
     @Override
     public void onClose() {
         FlowTierClientConfig.nametagOrder = new ArrayList<>(order);
+        FlowTierClientConfig.normalizeNametagOrder();
         FlowTierClientConfig.save();
         if (minecraft != null) minecraft.setScreen(parent);
     }

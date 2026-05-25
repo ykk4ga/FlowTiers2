@@ -47,6 +47,26 @@ replay_*.log
 *.ear
 !gradle/wrapper/gradle-wrapper.jar
 
+# NeoForge / Quilt generated output
+/neoforge/.gradle/
+/neoforge/build/
+/neoforge/out/
+/neoforge/classes/
+/neoforge/bin/
+/neoforge/run/
+/neoforge/runs/
+/neoforge/hs_err_*.log
+/neoforge/replay_*.log
+/quilt/.gradle/
+/quilt/build/
+/quilt/out/
+/quilt/classes/
+/quilt/bin/
+/quilt/run/
+/quilt/runs/
+/quilt/hs_err_*.log
+/quilt/replay_*.log
+
 # temporary files
 *.tmp
 *.temp
