@@ -27,26 +27,23 @@ public class PlayerListHudMixin {
 			if (suffixStr.isEmpty()) return;
 			if (cir.getReturnValue().getString().contains(suffixStr)) return;
 
+			Text cleanName = stripLeadingSeparator(cir.getReturnValue());
+
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				cir.setReturnValue(suffix.copy()
-						.append(joiner(suffix, cir.getReturnValue()))
-						.append(cir.getReturnValue()));
+						.append(Text.literal(" "))
+						.append(cleanName));
 			} else {
-				cir.setReturnValue(cir.getReturnValue().copy()
-						.append(joiner(cir.getReturnValue(), suffix))
+				cir.setReturnValue(cleanName.copy()
+						.append(Text.literal(" "))
 						.append(suffix));
 			}
 		});
 	}
 
-	private static Text joiner(Text left, Text right) {
-		String leftValue = left.getString();
-		String rightValue = right.getString();
-		return hasSeparatorEdge(leftValue, rightValue) || leftValue.endsWith(" ") || rightValue.startsWith(" ")
-				? Text.empty() : Text.literal(" ");
-	}
-
-	private static boolean hasSeparatorEdge(String left, String right) {
-		return left.endsWith("|") || right.startsWith("|");
+	private static Text stripLeadingSeparator(Text text) {
+		String raw = text.getString();
+		String stripped = raw.replaceFirst("^\\s*\\|\\s*", "");
+		return stripped.equals(raw) ? text : Text.literal(stripped);
 	}
 }

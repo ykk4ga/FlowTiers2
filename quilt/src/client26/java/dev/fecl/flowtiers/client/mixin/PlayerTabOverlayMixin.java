@@ -32,17 +32,26 @@ public class PlayerTabOverlayMixin {
 			String suffixStr = suffix.getString();
 			if (suffixStr.isEmpty()) return;
 
-			if (cir.getReturnValue() != null && cir.getReturnValue().getString().contains(suffixStr)) return;
+			Component name = cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue();
+			if (name.getString().contains(suffixStr)) return;
+
+			Component cleanName = stripLeadingSeparator(name);
 
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				cir.setReturnValue(suffix.copy()
 						.append(Component.literal(" "))
-						.append(cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue()));
+						.append(cleanName));
 			} else {
-				cir.setReturnValue((cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue().copy())
+				cir.setReturnValue(cleanName.copy()
 						.append(Component.literal(" "))
 						.append(suffix));
 			}
 		});
+	}
+
+	private static Component stripLeadingSeparator(Component component) {
+		String raw = component.getString();
+		String stripped = raw.replaceFirst("^\\s*\\|\\s*", "");
+		return stripped.equals(raw) ? component : Component.literal(stripped);
 	}
 }

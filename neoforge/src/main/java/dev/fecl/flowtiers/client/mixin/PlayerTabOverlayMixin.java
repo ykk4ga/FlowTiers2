@@ -35,18 +35,27 @@ public class PlayerTabOverlayMixin {
 		FlowTiersClientState.cache().fetch(uuid);
 		FlowTiersClientState.cache().getIfFresh(uuid).ifPresent(stats -> {
 			Component suffix = FlowTierFormatter.compact(stats);
+			if (suffix.getString().isEmpty()) return;
 			if (current != null && current.getString().contains(suffix.getString())) return;
+
+			Component cleanName = stripLeadingSeparator(current == null ? Component.empty() : current);
 
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				cir.setReturnValue(suffix.copy()
 						.append(Component.literal(" "))
-						.append(current == null ? Component.empty() : current));
+						.append(cleanName));
 			} else {
-				cir.setReturnValue((current == null ? Component.empty() : current.copy())
+				cir.setReturnValue(cleanName.copy()
 						.append(Component.literal(" "))
 						.append(suffix));
 			}
 		});
+	}
+
+	private static Component stripLeadingSeparator(Component component) {
+		String raw = component.getString();
+		String stripped = raw.replaceFirst("^\\s*\\|\\s*", "");
+		return stripped.equals(raw) ? component : Component.literal(stripped);
 	}
 
 	private static UUID profileId(GameProfile profile) {

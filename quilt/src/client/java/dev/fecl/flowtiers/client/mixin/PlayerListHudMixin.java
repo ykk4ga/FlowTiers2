@@ -27,15 +27,23 @@ public class PlayerListHudMixin {
 			if (suffixStr.isEmpty()) return;
 			if (cir.getReturnValue().getString().contains(suffixStr)) return;
 
+			Text cleanName = stripLeadingSeparator(cir.getReturnValue());
+
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				cir.setReturnValue(suffix.copy()
 						.append(Text.literal(" "))
-						.append(cir.getReturnValue()));
+						.append(cleanName));
 			} else {
-				cir.setReturnValue(cir.getReturnValue().copy()
+				cir.setReturnValue(cleanName.copy()
 						.append(Text.literal(" "))
 						.append(suffix));
 			}
 		});
+	}
+
+	private static Text stripLeadingSeparator(Text text) {
+		String raw = text.getString();
+		String stripped = raw.replaceFirst("^\\s*\\|\\s*", "");
+		return stripped.equals(raw) ? text : Text.literal(stripped);
 	}
 }

@@ -32,28 +32,26 @@ public class PlayerTabOverlayMixin {
 			String suffixStr = suffix.getString();
 			if (suffixStr.isEmpty()) return;
 
-			if (cir.getReturnValue() != null && cir.getReturnValue().getString().contains(suffixStr)) return;
+			Component name = cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue();
+			if (name.getString().contains(suffixStr)) return;
+
+			Component cleanName = stripLeadingSeparator(name);
 
 			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
 				cir.setReturnValue(suffix.copy()
-						.append(joiner(suffix, cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue()))
-						.append(cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue()));
+						.append(Component.literal(" "))
+						.append(cleanName));
 			} else {
-				cir.setReturnValue((cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue().copy())
-						.append(joiner(cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue(), suffix))
+				cir.setReturnValue(cleanName.copy()
+						.append(Component.literal(" "))
 						.append(suffix));
 			}
 		});
 	}
 
-	private static Component joiner(Component left, Component right) {
-		String leftValue = left.getString();
-		String rightValue = right.getString();
-		return hasSeparatorEdge(leftValue, rightValue) || leftValue.endsWith(" ") || rightValue.startsWith(" ")
-				? Component.empty() : Component.literal(" ");
-	}
-
-	private static boolean hasSeparatorEdge(String left, String right) {
-		return left.endsWith("|") || right.startsWith("|");
+	private static Component stripLeadingSeparator(Component component) {
+		String raw = component.getString();
+		String stripped = raw.replaceFirst("^\\s*\\|\\s*", "");
+		return stripped.equals(raw) ? component : Component.literal(stripped);
 	}
 }
