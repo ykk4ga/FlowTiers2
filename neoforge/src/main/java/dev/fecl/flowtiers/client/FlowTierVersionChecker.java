@@ -78,7 +78,7 @@ public final class FlowTierVersionChecker {
 				.append(Component.literal(latestVersion).withStyle(ChatFormatting.GREEN))
 				.append(Component.literal(" (you have " + currentVersion() + "). ").withStyle(ChatFormatting.GRAY))
 				.append(Component.literal(DOWNLOAD_URI.toString()).withStyle(ChatFormatting.YELLOW));
-		client.player.sendSystemMessage(message);
+		client.gui.getChat().addMessage(message);
 	}
 
 	private static String currentVersion() {
