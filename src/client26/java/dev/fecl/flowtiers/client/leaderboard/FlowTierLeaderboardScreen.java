@@ -7,6 +7,7 @@ import java.util.UUID;
 import dev.fecl.flowtiers.client.FlowTierClientConfig;
 import dev.fecl.flowtiers.client.FlowTierFormatter;
 import dev.fecl.flowtiers.client.FlowTierStats;
+import dev.fecl.flowtiers.client.FlowTierStatsClipboard;
 import dev.fecl.flowtiers.client.FlowTiersClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -21,9 +22,11 @@ public final class FlowTierLeaderboardScreen extends Screen {
             "GLOBAL", "SWORD", "AXE", "UHC", "VANILLA",
             "MACE", "DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP"
     };
+    private enum View { LEADERBOARD, FAVORITES, RECENT }
 
     private final FlowTierLeaderboardClient leaderboardClient;
     private String ladder = initialLadder();
+    private View view = View.LEADERBOARD;
     private int scrollOffset;
     private EditBox searchField;
     private String searchQuery = "";
@@ -75,6 +78,9 @@ public final class FlowTierLeaderboardScreen extends Screen {
         addRenderableWidget(Button.builder(Component.literal("Search"), button -> searchPlayer())
                 .bounds(panelLeft + 234, 72, 68, 18)
                 .build());
+        addViewButton("Leaderboard", View.LEADERBOARD, panelLeft + 8);
+        addViewButton("Favorites", View.FAVORITES, panelLeft + 112);
+        addViewButton("Recent", View.RECENT, panelLeft + 216);
         leaderboardClient.load(ladder);
     }
 
@@ -84,7 +90,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
         super.extractRenderState(context, mouseX, mouseY, delta);
 
         FlowTierLeaderboardClient.PageState state = leaderboardClient.state(ladder);
-        List<FlowTierLeaderboardClient.Entry> entries = state.entries();
+        List<FlowTierLeaderboardClient.Entry> entries = displayedEntries(state.entries());
         List<FlowTierLeaderboardClient.Entry> visibleEntries = visibleEntries(entries);
         int panelLeft = panelLeft();
         int panelRight = panelRight();
@@ -106,7 +112,8 @@ public final class FlowTierLeaderboardScreen extends Screen {
         }
 
         if (visibleEntries.isEmpty()) {
-            String message = state.error() != null ? state.error() : state.loading() ? "Loading..." : "No leaderboard data.";
+            String message = view == View.FAVORITES ? "No favorite players yet." : view == View.RECENT ? "No recently viewed players yet." :
+                    state.error() != null ? state.error() : state.loading() ? "Loading..." : "No leaderboard data.";
             if (!entries.isEmpty() && !searchText().isBlank()) {
                 message = resolvedSearchEntry == null ? "No loaded rows match. Resolving player..." : "Press Search to open found player.";
             }
@@ -138,11 +145,12 @@ public final class FlowTierLeaderboardScreen extends Screen {
         }
         context.disableScissor();
 
-        if (state.loading()) {
+        if (view == View.LEADERBOARD && state.loading()) {
             context.centeredText(font, Component.literal("Loading more..."), width / 2, height - 18, 0xFF7C8BA1);
         } else {
-            context.text(font, entries.size() + " players | page " + Math.max(1, state.page()), panelLeft, height - 18, 0xFF7C8BA1, true);
-            context.text(font, "Scroll down to load more. Esc closes.", panelRight - 208, height - 18, 0xFF7C8BA1, true);
+            String footer = view == View.LEADERBOARD ? entries.size() + " players | page " + Math.max(1, state.page()) : entries.size() + " saved players";
+            context.text(font, footer, panelLeft, height - 18, 0xFF7C8BA1, true);
+            context.text(font, view == View.LEADERBOARD ? "Scroll down to load more. Esc closes." : "Click a player to open their profile.", panelRight - 208, height - 18, 0xFF7C8BA1, true);
         }
     }
 
@@ -178,7 +186,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
         scrollOffset = Math.max(0, scrollOffset);
         FlowTierLeaderboardClient.PageState state = leaderboardClient.state(ladder);
         int visibleRows = Math.max(1, (height - 110) / 16);
-        if (searchText().isBlank() && scrollOffset > Math.max(0, state.entries().size() - visibleRows - 4) * 16) {
+        if (view == View.LEADERBOARD && searchText().isBlank() && scrollOffset > Math.max(0, state.entries().size() - visibleRows - 4) * 16) {
             leaderboardClient.loadMore(ladder);
         }
         return true;
@@ -194,7 +202,21 @@ public final class FlowTierLeaderboardScreen extends Screen {
                 return true;
             }
         }
+        if (event.button() == 1) {
+            FlowTierLeaderboardClient.Entry entry = rowAt(event.x(), event.y());
+            if (entry != null) {
+                copyStats(entry);
+                return true;
+            }
+        }
         return super.mouseClicked(event, focused);
+    }
+
+    private void copyStats(FlowTierLeaderboardClient.Entry entry) {
+        UUID uuid = UUID.fromString(entry.uuid());
+        FlowTiersClientState.cache().fetch(uuid).thenAccept(stats -> {
+            if (minecraft != null) minecraft.execute(() -> minecraft.keyboardHandler.setClipboard(FlowTierStatsClipboard.format(entry.name(), stats)));
+        });
     }
 
     @Override
@@ -214,7 +236,7 @@ public final class FlowTierLeaderboardScreen extends Screen {
         int rowHeight = 16;
         if (mouseX < panelLeft || mouseX > panelRight || mouseY < top || mouseY > bottom) return null;
         int index = ((int) mouseY - top + scrollOffset) / rowHeight;
-        List<FlowTierLeaderboardClient.Entry> entries = visibleEntries(leaderboardClient.state(ladder).entries());
+        List<FlowTierLeaderboardClient.Entry> entries = visibleEntries(displayedEntries(leaderboardClient.state(ladder).entries()));
         return index >= 0 && index < entries.size() ? entries.get(index) : null;
     }
 
@@ -227,7 +249,35 @@ public final class FlowTierLeaderboardScreen extends Screen {
     }
 
     private int tableTop() {
-        return 124;
+        return 140;
+    }
+
+    private void addViewButton(String label, View buttonView, int x) {
+        Button button = Button.builder(Component.literal((view == buttonView ? "> " : "") + label), ignored -> {
+            view = buttonView;
+            scrollOffset = 0;
+            fetchSavedPlayers();
+            init();
+        }).bounds(x, 94, 98, 18).build();
+        button.active = view != buttonView;
+        addRenderableWidget(button);
+    }
+
+    private List<FlowTierLeaderboardClient.Entry> displayedEntries(List<FlowTierLeaderboardClient.Entry> leaderboardEntries) {
+        if (view == View.LEADERBOARD) return leaderboardEntries;
+        List<FlowTierClientConfig.PlayerReference> players = view == View.FAVORITES ? FlowTierClientConfig.favoritePlayers : FlowTierClientConfig.recentPlayers;
+        return players.stream().map(this::savedEntry).toList();
+    }
+
+    private FlowTierLeaderboardClient.Entry savedEntry(FlowTierClientConfig.PlayerReference player) {
+        FlowTierStats.LadderStats stats = FlowTiersClientState.cache().getIfFresh(UUID.fromString(player.uuid()))
+                .flatMap(value -> value.ladder(ladder).or(value::displayLadder)).orElse(null);
+        return new FlowTierLeaderboardClient.Entry(stats == null ? 0 : stats.position(), player.uuid(), player.name(), stats == null ? 0 : stats.totalRating());
+    }
+
+    private void fetchSavedPlayers() {
+        List<FlowTierClientConfig.PlayerReference> players = view == View.FAVORITES ? FlowTierClientConfig.favoritePlayers : FlowTierClientConfig.recentPlayers;
+        for (FlowTierClientConfig.PlayerReference player : players) FlowTiersClientState.cache().fetch(UUID.fromString(player.uuid()));
     }
 
     private List<FlowTierLeaderboardClient.Entry> visibleEntries(List<FlowTierLeaderboardClient.Entry> entries) {

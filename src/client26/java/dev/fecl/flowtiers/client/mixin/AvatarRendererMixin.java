@@ -28,32 +28,7 @@ public class AvatarRendererMixin {
 
 		FlowTiersClientState.cache().fetch(player.getUUID());
 		FlowTiersClientState.cache().getIfFresh(player.getUUID()).ifPresent(stats -> {
-			Component suffix = FlowTierFormatter.compact(stats);
-			String suffixStr = suffix.getString();
-			if (suffixStr.isEmpty()) return;
-
-			if (state.nameTag != null && state.nameTag.getString().contains(suffixStr)) return;
-
-			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
-				state.nameTag = suffix.copy()
-						.append(joiner(suffix, state.nameTag == null ? Component.empty() : state.nameTag))
-						.append(state.nameTag == null ? Component.empty() : state.nameTag);
-			} else {
-				state.nameTag = (state.nameTag == null ? Component.empty() : state.nameTag.copy())
-						.append(joiner(state.nameTag == null ? Component.empty() : state.nameTag, suffix))
-						.append(suffix);
-			}
+			state.nameTag = FlowTierFormatter.nametag(stats, state.nameTag == null ? Component.empty() : state.nameTag);
 		});
-	}
-
-	private static Component joiner(Component left, Component right) {
-		String leftValue = left.getString();
-		String rightValue = right.getString();
-		return hasSeparatorEdge(leftValue, rightValue) || leftValue.endsWith(" ") || rightValue.startsWith(" ")
-				? Component.empty() : Component.literal(" ");
-	}
-
-	private static boolean hasSeparatorEdge(String left, String right) {
-		return left.endsWith("|") || right.startsWith("|");
 	}
 }

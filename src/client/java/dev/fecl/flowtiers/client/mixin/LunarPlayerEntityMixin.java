@@ -28,28 +28,8 @@ public class LunarPlayerEntityMixin {
 		PlayerEntity player = (PlayerEntity) (Object) this;
 		FlowTiersClientState.cache().fetch(player.getUuid());
 		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
-			Text suffix = FlowTierFormatter.compact(stats);
-			String originalString = original == null ? "" : original.getString();
-			String suffixString = suffix.getString();
-			if (suffixString.isEmpty()) return;
-			if (originalString.contains(suffixString)) return;
-
 			Text baseName = original == null ? player.getName() : original;
-			Text name = FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT
-					? suffix.copy().append(joiner(suffix, baseName)).append(baseName)
-					: baseName.copy().append(joiner(baseName, suffix)).append(suffix);
-			cir.setReturnValue(name);
+			cir.setReturnValue(FlowTierFormatter.nametag(stats, baseName));
 		});
-	}
-
-	private static Text joiner(Text left, Text right) {
-		String leftValue = left.getString();
-		String rightValue = right.getString();
-		return hasSeparatorEdge(leftValue, rightValue) || leftValue.endsWith(" ") || rightValue.startsWith(" ")
-				? Text.empty() : Text.literal(" ");
-	}
-
-	private static boolean hasSeparatorEdge(String left, String right) {
-		return left.endsWith("|") || right.startsWith("|");
 	}
 }

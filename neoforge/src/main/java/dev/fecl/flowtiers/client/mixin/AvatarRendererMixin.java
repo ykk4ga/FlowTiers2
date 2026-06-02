@@ -27,20 +27,9 @@ public class AvatarRendererMixin {
 
 		FlowTiersClientState.cache().fetch(uuid);
 		FlowTiersClientState.cache().getIfFresh(uuid).ifPresent(stats -> {
-			Component suffix = FlowTierFormatter.compact(stats);
 			Component liveName = nameTag(state);
 			if (liveName == null) liveName = playerName(player);
-			if (liveName != null && liveName.getString().contains(suffix.getString())) return;
-
-			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
-				setNameTag(state, suffix.copy()
-						.append(Component.literal(" "))
-						.append(liveName == null ? Component.empty() : liveName));
-			} else {
-				setNameTag(state, (liveName == null ? Component.empty() : liveName.copy())
-						.append(Component.literal(" "))
-						.append(suffix));
-			}
+			setNameTag(state, FlowTierFormatter.nametag(stats, liveName == null ? Component.empty() : liveName));
 		});
 	}
 

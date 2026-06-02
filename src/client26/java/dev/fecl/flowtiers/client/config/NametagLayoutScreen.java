@@ -5,157 +5,204 @@ import dev.fecl.flowtiers.client.FlowTierFormatter;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class NametagLayoutScreen extends Screen {
-    private final Screen parent;
-    private static final int ROW_H = 24;
-    private static final int START_Y = 55;
+	private static final int START_Y = 62;
+	private static final int ROW_H = 28;
+	private static final int CARD_W = 150;
 
-    private final List<FlowTierClientConfig.NametagComponent> order;
+	private final Screen parent;
+	private final List<FlowTierClientConfig.NametagComponent> left = new ArrayList<>();
+	private final List<FlowTierClientConfig.NametagComponent> right = new ArrayList<>();
+	private FlowTierClientConfig.NametagComponent dragging;
+	private FlowTierClientConfig.NametagComponent selected;
 
-    public NametagLayoutScreen(Screen parent) {
-        super(Component.literal("Nametag Layout"));
-        this.parent = parent;
-        this.order = new ArrayList<>(FlowTierClientConfig.nametagOrder);
-    }
+	public NametagLayoutScreen(Screen parent) {
+		super(Component.literal("Nametag Layout"));
+		this.parent = parent;
+		left.addAll(FlowTierClientConfig.nametagLeftOrder);
+		right.addAll(FlowTierClientConfig.nametagRightOrder);
+	}
 
-    @Override
-    protected void init() {
-        clearWidgets();
-        int cx = width / 2;
-        int rowW = Math.min(420, width - 40);
-        int left = cx - rowW / 2;
+	@Override
+	protected void init() {
+		clearWidgets();
+		addRenderableWidget(Button.builder(Component.literal("Done"), button -> onClose())
+				.bounds(width / 2 - 50, height - 28, 100, 20).build());
+		if (selected == null) return;
 
-        for (int i = 0; i < order.size(); i++) {
-            final int idx = i;
-            FlowTierClientConfig.NametagComponent comp = order.get(i);
-            int y = START_Y + i * ROW_H;
+		int panelX = Math.max(8, width / 2 - 100);
+		int panelY = Math.min(height - 96, START_Y + 96);
+		Button leftSeparator = addRenderableWidget(Button.builder(separatorLabel("Left", FlowTierClientConfig.Edge.LEFT), button -> {
+			toggleSeparator(FlowTierClientConfig.Edge.LEFT);
+			init();
+		}).bounds(panelX, panelY + 22, 96, 20).build());
+		leftSeparator.active = canToggle(FlowTierClientConfig.Edge.LEFT);
+		Button rightSeparator = addRenderableWidget(Button.builder(separatorLabel("Right", FlowTierClientConfig.Edge.RIGHT), button -> {
+			toggleSeparator(FlowTierClientConfig.Edge.RIGHT);
+			init();
+		}).bounds(panelX + 104, panelY + 22, 96, 20).build());
+		rightSeparator.active = canToggle(FlowTierClientConfig.Edge.RIGHT);
+		addRenderableWidget(Button.builder(Component.literal("Visible: " + (isEnabled(selected) ? "ON" : "OFF")), button -> {
+			toggleEnabled(selected);
+			init();
+		}).bounds(panelX, panelY + 46, 96, 20).build());
+		if (selected == FlowTierClientConfig.NametagComponent.ELO || selected == FlowTierClientConfig.NametagComponent.POSITION) {
+			addRenderableWidget(Button.builder(Component.literal("Label: " + (labelEnabled(selected) ? "ON" : "OFF")), button -> {
+				toggleLabel(selected);
+				init();
+			}).bounds(panelX + 104, panelY + 46, 96, 20).build());
+		}
+	}
 
-            if (i > 0) {
-                addRenderableWidget(Button.builder(Component.literal("↑"), btn -> {
-                    swap(idx - 1, idx); init();
-                }).bounds(left + 190, y, 20, 18).build());
-            }
+	@Override
+	public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+		context.fill(0, 0, width, height, 0xE0101420);
+		super.extractRenderState(context, mouseX, mouseY, delta);
+		int leftX = leftX();
+		int rightX = rightX();
+		context.centeredText(font, Component.literal("Nametag Layout"), width / 2, 12, 0xFF00BFFF);
+		context.centeredText(font, Component.literal("Drag modules between sides. Right-click a module for settings."), width / 2, 28, 0xFFAAAAAA);
+		context.centeredText(font, Component.literal("LEFT OF NAME"), leftX + CARD_W / 2, 46, 0xFF9CA3AF);
+		context.centeredText(font, Component.literal("RIGHT OF NAME"), rightX + CARD_W / 2, 46, 0xFF9CA3AF);
+		drawZone(context, left, leftX);
+		drawZone(context, right, rightX);
+		context.centeredText(font, FlowTierFormatter.previewCompact(), width / 2, START_Y + 68, 0xFFFFFFFF);
+		if (selected != null) {
+			context.centeredText(font, Component.literal(componentName(selected) + " settings"), width / 2, Math.min(height - 96, START_Y + 96), 0xFFFFFFFF);
+		}
+		if (dragging != null) drawCard(context, dragging, mouseX - CARD_W / 2, mouseY - 10, true);
+	}
 
-            if (i < order.size() - 1) {
-                addRenderableWidget(Button.builder(Component.literal("↓"), btn -> {
-                    swap(idx, idx + 1); init();
-                }).bounds(left + 214, y, 20, 18).build());
-            }
+	@Override
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+		FlowTierClientConfig.NametagComponent component = moduleAt(event.x(), event.y());
+		if (component != null && event.button() == 0) {
+			dragging = component;
+			return true;
+		}
+		if (component != null && event.button() == 1) {
+			selected = component;
+			init();
+			return true;
+		}
+		return super.mouseClicked(event, doubled);
+	}
 
-            addRenderableWidget(Button.builder(
-                    Component.literal(isEnabled(comp) ? "ON" : "OFF"),
-                    btn -> {
-                        toggle(order.get(idx));
-                        btn.setMessage(Component.literal(isEnabled(order.get(idx)) ? "ON" : "OFF"));
-                    }
-            ).bounds(left + 238, y, 50, 18).build());
+	@Override
+	public boolean mouseReleased(MouseButtonEvent event) {
+		if (dragging != null && event.button() == 0) {
+			List<FlowTierClientConfig.NametagComponent> destination = event.x() < width / 2 ? left : right;
+			left.remove(dragging);
+			right.remove(dragging);
+			destination.add(dropIndex(destination, event.y()), dragging);
+			dragging = null;
+			sync();
+			return true;
+		}
+		return super.mouseReleased(event);
+	}
 
-            if (comp == FlowTierClientConfig.NametagComponent.ELO) {
-                addRenderableWidget(Button.builder(
-                        Component.literal("Label: " + (FlowTierClientConfig.eloLabelEnabled ? "ON" : "OFF")),
-                        btn -> {
-                            FlowTierClientConfig.eloLabelEnabled = !FlowTierClientConfig.eloLabelEnabled;
-                            btn.setMessage(Component.literal("Label: " + (FlowTierClientConfig.eloLabelEnabled ? "ON" : "OFF")));
-                        }
-                ).bounds(left + 292, y, 80, 18).build());
-            }
+	private void drawZone(GuiGraphicsExtractor context, List<FlowTierClientConfig.NametagComponent> modules, int x) {
+		context.fill(x - 4, START_Y - 4, x + CARD_W + 4, START_Y + Math.max(1, modules.size()) * ROW_H + 2, 0x332A3345);
+		for (int i = 0; i < modules.size(); i++) drawCard(context, modules.get(i), x, START_Y + i * ROW_H, false);
+	}
 
-            if (comp == FlowTierClientConfig.NametagComponent.POSITION) {
-                addRenderableWidget(Button.builder(
-                        Component.literal("Label: " + (FlowTierClientConfig.positionLabelEnabled ? "ON" : "OFF")),
-                        btn -> {
-                            FlowTierClientConfig.positionLabelEnabled = !FlowTierClientConfig.positionLabelEnabled;
-                            btn.setMessage(Component.literal("Label: " + (FlowTierClientConfig.positionLabelEnabled ? "ON" : "OFF")));
-                        }
-                ).bounds(left + 292, y, 80, 18).build());
-            }
-        }
+	private void drawCard(GuiGraphicsExtractor context, FlowTierClientConfig.NametagComponent component, int x, int y, boolean floating) {
+		int color = component == selected ? 0xFF185B78 : floating ? 0xEE256D85 : 0xCC263344;
+		context.fill(x, y, x + CARD_W, y + 22, color);
+		context.text(font, Component.literal(edgeMark(component, FlowTierClientConfig.Edge.LEFT) + componentName(component)
+				+ edgeMark(component, FlowTierClientConfig.Edge.RIGHT)), x + 6, y + 7, isEnabled(component) ? 0xFFFFFFFF : 0xFF888888, true);
+	}
 
-        addRenderableWidget(Button.builder(Component.literal("Done"), btn -> onClose())
-                .bounds(cx - 50, height - 28, 100, 20).build());
-    }
+	private FlowTierClientConfig.NametagComponent moduleAt(double mouseX, double mouseY) {
+		FlowTierClientConfig.NametagComponent component = moduleAt(left, leftX(), mouseX, mouseY);
+		return component == null ? moduleAt(right, rightX(), mouseX, mouseY) : component;
+	}
 
-    @Override
-    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        context.fill(0, 0, width, height, 0xE0101420);
-        super.extractRenderState(context, mouseX, mouseY, delta);
+	private FlowTierClientConfig.NametagComponent moduleAt(List<FlowTierClientConfig.NametagComponent> modules, int x, double mouseX, double mouseY) {
+		if (mouseX < x || mouseX > x + CARD_W || mouseY < START_Y) return null;
+		int index = (int) ((mouseY - START_Y) / ROW_H);
+		return index >= 0 && index < modules.size() && mouseY <= START_Y + index * ROW_H + 22 ? modules.get(index) : null;
+	}
 
-        int cx = width / 2;
-        int rowW = Math.min(420, width - 40);
-        int left = cx - rowW / 2;
+	private int dropIndex(List<FlowTierClientConfig.NametagComponent> destination, double mouseY) {
+		return Math.max(0, Math.min(destination.size(), (int) ((mouseY - START_Y + ROW_H / 2.0) / ROW_H)));
+	}
 
-        context.centeredText(font, "Nametag Layout", cx, 10, 0xFF00BFFF);
-        context.centeredText(font, "↑↓ reorder  •  toggle ON/OFF", cx, 22, 0xFF888888);
+	private void sync() {
+		FlowTierClientConfig.setNametagLayout(left, right);
+		left.clear();
+		left.addAll(FlowTierClientConfig.nametagLeftOrder);
+		right.clear();
+		right.addAll(FlowTierClientConfig.nametagRightOrder);
+	}
 
-        context.text(font, Component.literal("Component"), left,       START_Y - 14, 0xFFAAAAAA, false);
-        context.text(font, Component.literal("Move"),      left + 190, START_Y - 14, 0xFFAAAAAA, false);
-        context.text(font, Component.literal("Show"),      left + 244, START_Y - 14, 0xFFAAAAAA, false);
-        context.text(font, Component.literal("Label"),     left + 298, START_Y - 14, 0xFFAAAAAA, false);
-        context.fill(left - 4, START_Y - 4, left + rowW + 4, START_Y - 3, 0xFF444444);
+	private boolean canToggle(FlowTierClientConfig.Edge edge) {
+		return FlowTierClientConfig.hasSeparator(selected, edge) || FlowTierClientConfig.canEnableSeparator(selected, edge);
+	}
 
-        for (int i = 0; i < order.size(); i++) {
-            FlowTierClientConfig.NametagComponent comp = order.get(i);
-            int y = START_Y + i * ROW_H;
-            if (i % 2 == 0) {
-                context.fill(left - 4, y - 2, left + rowW + 4, y + ROW_H - 4, 0x22FFFFFF);
-            }
-            context.text(font, Component.literal((i + 1) + ". " + componentName(comp)),
-                    left, y + 4, isEnabled(comp) ? 0xFFFFFFFF : 0xFF777777, false);
-        }
+	private void toggleSeparator(FlowTierClientConfig.Edge edge) {
+		FlowTierClientConfig.setSeparator(selected, edge, !FlowTierClientConfig.hasSeparator(selected, edge));
+	}
 
-        int previewY = START_Y + order.size() * ROW_H + 14;
-        context.fill(left - 4, previewY - 4, left + rowW + 4, previewY + 14, 0x33FFFFFF);
-        context.text(font, Component.literal("Preview:"), left, previewY + 2, 0xFFAAAAAA, false);
-        context.text(font, FlowTierFormatter.previewCompact(), left + 65, previewY + 2, 0xFFFFFFFF, false);
-    }
+	private Component separatorLabel(String side, FlowTierClientConfig.Edge edge) {
+		return Component.literal(side + " |: " + (FlowTierClientConfig.hasSeparator(selected, edge) ? "ON" : "OFF"));
+	}
 
-    private void swap(int a, int b) {
-        FlowTierClientConfig.NametagComponent tmp = order.get(a);
-        order.set(a, order.get(b));
-        order.set(b, tmp);
-        FlowTierClientConfig.nametagOrder = new ArrayList<>(order);
-    }
+	private static String edgeMark(FlowTierClientConfig.NametagComponent component, FlowTierClientConfig.Edge edge) {
+		if (!FlowTierClientConfig.hasSeparator(component, edge)) return "";
+		return edge == FlowTierClientConfig.Edge.LEFT ? "| " : " |";
+	}
 
-    private static boolean isEnabled(FlowTierClientConfig.NametagComponent comp) {
-        return switch (comp) {
-            case GAMEMODE_ICON -> FlowTierClientConfig.gamemodeIconEnabled;
-            case TIER -> FlowTierClientConfig.tierEnabled;
-            case SEPARATOR -> FlowTierClientConfig.separatorEnabled;
-            case ELO -> FlowTierClientConfig.eloEnabled;
-            case POSITION -> FlowTierClientConfig.positionEnabled;
-        };
-    }
+	private int leftX() { return Math.max(8, width / 2 - CARD_W - 90); }
+	private int rightX() { return Math.min(width - CARD_W - 8, width / 2 + 90); }
 
-    private static void toggle(FlowTierClientConfig.NametagComponent comp) {
-        switch (comp) {
-            case GAMEMODE_ICON -> FlowTierClientConfig.gamemodeIconEnabled = !FlowTierClientConfig.gamemodeIconEnabled;
-            case TIER -> FlowTierClientConfig.tierEnabled = !FlowTierClientConfig.tierEnabled;
-            case SEPARATOR -> FlowTierClientConfig.separatorEnabled = !FlowTierClientConfig.separatorEnabled;
-            case ELO -> FlowTierClientConfig.eloEnabled = !FlowTierClientConfig.eloEnabled;
-            case POSITION -> FlowTierClientConfig.positionEnabled = !FlowTierClientConfig.positionEnabled;
-        }
-    }
+	private static boolean isEnabled(FlowTierClientConfig.NametagComponent component) {
+		return switch (component) {
+			case GAMEMODE_ICON -> FlowTierClientConfig.gamemodeIconEnabled;
+			case TIER -> FlowTierClientConfig.tierEnabled;
+			case ELO -> FlowTierClientConfig.eloEnabled;
+			case POSITION -> FlowTierClientConfig.positionEnabled;
+		};
+	}
 
-    private static String componentName(FlowTierClientConfig.NametagComponent comp) {
-        return switch (comp) {
-            case GAMEMODE_ICON -> "Gamemode Icon";
-            case TIER -> "Tier";
-            case SEPARATOR -> "Separator";
-            case ELO -> "SR";
-            case POSITION -> "Position";
-        };
-    }
+	private static void toggleEnabled(FlowTierClientConfig.NametagComponent component) {
+		switch (component) {
+			case GAMEMODE_ICON -> FlowTierClientConfig.gamemodeIconEnabled = !FlowTierClientConfig.gamemodeIconEnabled;
+			case TIER -> FlowTierClientConfig.tierEnabled = !FlowTierClientConfig.tierEnabled;
+			case ELO -> FlowTierClientConfig.eloEnabled = !FlowTierClientConfig.eloEnabled;
+			case POSITION -> FlowTierClientConfig.positionEnabled = !FlowTierClientConfig.positionEnabled;
+		}
+	}
 
-    @Override
-    public void onClose() {
-        FlowTierClientConfig.nametagOrder = new ArrayList<>(order);
-        FlowTierClientConfig.normalizeNametagOrder();
-        FlowTierClientConfig.save();
-        if (minecraft != null) minecraft.setScreen(parent);
-    }
+	private static boolean labelEnabled(FlowTierClientConfig.NametagComponent component) {
+		return component == FlowTierClientConfig.NametagComponent.ELO ? FlowTierClientConfig.eloLabelEnabled : FlowTierClientConfig.positionLabelEnabled;
+	}
+
+	private static void toggleLabel(FlowTierClientConfig.NametagComponent component) {
+		if (component == FlowTierClientConfig.NametagComponent.ELO) FlowTierClientConfig.eloLabelEnabled = !FlowTierClientConfig.eloLabelEnabled;
+		if (component == FlowTierClientConfig.NametagComponent.POSITION) FlowTierClientConfig.positionLabelEnabled = !FlowTierClientConfig.positionLabelEnabled;
+	}
+
+	private static String componentName(FlowTierClientConfig.NametagComponent component) {
+		return switch (component) {
+			case GAMEMODE_ICON -> "Gamemode Icon";
+			case TIER -> "Tier";
+			case ELO -> "SR";
+			case POSITION -> "Position";
+		};
+	}
+
+	@Override
+	public void onClose() {
+		sync();
+		FlowTierClientConfig.save();
+		if (minecraft != null) minecraft.setScreen(parent);
+	}
 }

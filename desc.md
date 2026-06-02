@@ -2,28 +2,40 @@
 
 Bring FlowPvP ranked stats straight into Minecraft.
 
-FlowTiers is a client-side Fabric mod for viewing FlowPvP tiers, SR, positions, ladder icons, leaderboards, and player profiles without leaving the game.
+FlowTiers is a client-side Fabric mod for viewing FlowPvP tiers, SR, positions, ladder icons, leaderboards, and player profiles without leaving the game. Build a layout that suits you, keep an eye on your own stats, and quickly share player profiles with friends.
 
 ## What It Does
 
 - Shows FlowPvP stats in player nametags
 - Adds FlowPvP stats to the tab list
-- Includes a compact draggable HUD for your own stats
+- Includes a draggable and scalable HUD for your own stats
 - Lets you search players with `/flowtiers <player>`
 - Adds an in-game FlowPvP leaderboard browser
+- Saves recently viewed profiles and favorite players
+- Lets you copy player stats and FlowPvP profile links
 - Supports Global, Highest Tier, and individual ladder display modes
 - Lets you customize which stats appear and how they are ordered
+- Includes an optional Modrinth version checker
 - Works through Mod Menu with Cloth Config
 
 ## Custom Nametag Layouts
 
-Choose exactly how your nametag stats are displayed:
+Drag modules into place and choose exactly how your nametag stats are displayed:
 
-- Move tier, SR, position, icons, and separators
+- Place tier, SR, position, and ladder icons on either side of player names
 - Toggle each part on or off
-- Use multiple movable separator slots
-- Adjacent separators render as one clean separator
-- Missing separators fall back to normal spacing, so text never gets stuck together
+- Right-click modules to enable separators on either side
+- Keep clean spacing automatically when no separator is used
+- Collapse neighboring separators into one tidy divider
+
+## Personal HUD
+
+Keep your own ranked stats visible while you play:
+
+- Drag the HUD anywhere on screen
+- Scale the HUD from 50% to 200%
+- Toggle the background, match record, and streak display
+- Preview placement clearly before returning to the game
 
 ## Leaderboards And Profiles
 
@@ -32,8 +44,12 @@ Browse FlowPvP rankings directly in-game:
 - Switch between ladders
 - Scroll through leaderboard pages
 - Search players by name
-- Open player profile views
+- Open player profile views by clicking leaderboard rows
+- Revisit recently viewed players
+- Save favorite players for quick access
 - View ladder stats, positions, and rating history
+- Copy a Discord-friendly player stats summary
+- Copy a shareable FlowPvP profile link
 
 ## Supported Ladders
 

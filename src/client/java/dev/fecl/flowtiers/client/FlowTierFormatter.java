@@ -25,22 +25,51 @@ public final class FlowTierFormatter {
 			return Text.literal("Unranked").formatted(Formatting.GRAY);
 		}
 
-		return decorated(ladder);
+		Text left = decorated(ladder, FlowTierClientConfig.nametagLeftOrder);
+		Text right = decorated(ladder, FlowTierClientConfig.nametagRightOrder);
+		if (left.getString().isEmpty()) return right;
+		if (right.getString().isEmpty()) return left;
+		return left.copy().append(Text.literal(" ")).append(right);
+	}
+
+	public static Text nametag(FlowTierStats stats, Text playerName) {
+		FlowTierStats.LadderStats ladder = stats.displayLadder().orElse(null);
+		if (ladder == null || !ladder.hasPlayedRanked()) return playerName;
+		Text left = decorated(ladder, FlowTierClientConfig.nametagLeftOrder);
+		Text right = decorated(ladder, FlowTierClientConfig.nametagRightOrder);
+		if (alreadyDecorated(playerName, left, right)) return playerName;
+		MutableText text = Text.empty();
+		if (!left.getString().isEmpty()) text.append(left).append(Text.literal(" "));
+		text.append(playerName);
+		if (!right.getString().isEmpty()) text.append(Text.literal(" ")).append(right);
+		return text;
+	}
+
+	private static boolean alreadyDecorated(Text playerName, Text left, Text right) {
+		String name = playerName.getString();
+		String leftValue = left.getString();
+		String rightValue = right.getString();
+		boolean hasLayout = !leftValue.isEmpty() || !rightValue.isEmpty();
+		return hasLayout
+				&& (leftValue.isEmpty() || name.contains(leftValue))
+				&& (rightValue.isEmpty() || name.contains(rightValue));
 	}
 
 	public static Text previewCompact() {
 		net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
 		if (client != null && client.player != null) {
+			FlowTiersClientState.cache().fetch(client.player.getUuid());
 			dev.fecl.flowtiers.client.FlowTierStats real =
 					dev.fecl.flowtiers.client.FlowTiersClientState.cache()
 							.getIfFresh(client.player.getUuid()).orElse(null);
-			if (real != null) return compact(real);
+			if (real != null) return Text.literal("Preview: ").formatted(Formatting.GRAY).append(nametag(real, client.player.getName()));
 		}
 		FlowTierStats.LadderStats fake = new FlowTierStats.LadderStats(
 				FlowTierClientConfig.preferredLadder,
 				800, 10, 5, 2, 10, "MT4", 123
 		);
-		return decorated(fake);
+		return Text.literal("Preview: ").formatted(Formatting.GRAY)
+				.append(nametag(new FlowTierStats(java.util.UUID.randomUUID(), "PlayerName", Map.of(fake.ladder(), fake), 0L), Text.literal("PlayerName")));
 	}
 
 	public static Text hud(FlowTierStats stats) {
@@ -53,7 +82,7 @@ public final class FlowTierFormatter {
 		return Text.literal("FlowPvP: ").formatted(Formatting.GRAY)
 				.append(Text.literal(stats.name()).formatted(Formatting.WHITE))
 				.append(Text.literal(" "))
-				.append(decorated(ladder));
+				.append(decorated(ladder, FlowTierClientConfig.nametagLeftOrder));
 	}
 
 	public static Text details(FlowTierStats stats) {
@@ -96,60 +125,46 @@ public final class FlowTierFormatter {
 				.append(Text.literal(Integer.toString(ladder.position())).formatted(Formatting.WHITE));
 	}
 
-	private static Text decorated(FlowTierStats.LadderStats ladder) {
+	private static Text decorated(FlowTierStats.LadderStats ladder, List<FlowTierClientConfig.NametagComponent> order) {
 		MutableText text = Text.empty();
-		boolean wrotePart = false;
-
-		for (int componentIndex = 0; componentIndex < FlowTierClientConfig.nametagOrder.size(); componentIndex++) {
-			FlowTierClientConfig.NametagComponent component = FlowTierClientConfig.nametagOrder.get(componentIndex);
-			switch (component) {
-				case GAMEMODE_ICON -> {
-					if (!FlowTierClientConfig.gamemodeIconEnabled) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Text.literal(" "));
-					text.append(icon(ladder.ladder()));
-					wrotePart = true;
-				}
-				case TIER -> {
-					if (!FlowTierClientConfig.tierEnabled) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Text.literal(" "));
-					if (FlowTierClientConfig.coloredTier) {
-						text.append(Text.literal(tierLabel(ladder)).setStyle(Style.EMPTY.withColor(tierColor(ladder.tierLabel(), ladder.position()))));
-					} else {
-						text.append(Text.literal(tierLabel(ladder)).formatted(Formatting.WHITE));
-					}
-					wrotePart = true;
-				}
-				case SEPARATOR -> {
-					if (!FlowTierClientConfig.separatorEnabled) continue;
-					if (!endsWithSeparator(text)) text.append(separator(text.getString().isEmpty() ? "|" : " |"));
-					wrotePart = true;
-				}
-				case ELO -> {
-					if (!FlowTierClientConfig.eloEnabled) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Text.literal(" "));
-					Style eloStyle = Style.EMPTY.withColor(FlowTierClientConfig.coloredElo ? ratingColor(ladder.totalRating()) : 0xFFFFFF);
-					text.append(Text.literal(Integer.toString(ladder.totalRating())).setStyle(eloStyle));
-					if (FlowTierClientConfig.eloLabelEnabled)
-						text.append(Text.literal(" " + FlowTierRankSystem.RATING_LABEL).setStyle(eloStyle));
-					wrotePart = true;
-				}
-				case POSITION -> {
-					if (!FlowTierClientConfig.positionEnabled || !ladder.hasPosition()) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Text.literal(" "));
-					int posColor = FlowTierClientConfig.coloredPosition ? positionColor(ladder.tierLabel(), ladder.position()) : 0xFFFFFF;
-					if (FlowTierClientConfig.positionLabelEnabled)
-						text.append(Text.literal("#").setStyle(Style.EMPTY.withColor(posColor)));
-					text.append(Text.literal(Integer.toString(ladder.position())).setStyle(Style.EMPTY.withColor(posColor)));
-					wrotePart = true;
-				}
-			}
+		List<FlowTierClientConfig.NametagComponent> visible = order.stream().filter(component -> isVisible(component, ladder)).toList();
+		if (visible.isEmpty()) return text;
+		if (FlowTierClientConfig.separatorEnabled && FlowTierClientConfig.hasSeparator(visible.get(0), FlowTierClientConfig.Edge.LEFT)) text.append(separator("| "));
+		for (int i = 0; i < visible.size(); i++) {
+			FlowTierClientConfig.NametagComponent component = visible.get(i);
+			if (i > 0) text.append(FlowTierClientConfig.separatorEnabled && boundaryHasSeparator(visible.get(i - 1), component) ? separator(" | ") : Text.literal(" "));
+			text.append(moduleText(component, ladder));
 		}
+		if (FlowTierClientConfig.separatorEnabled && FlowTierClientConfig.hasSeparator(visible.get(visible.size() - 1), FlowTierClientConfig.Edge.RIGHT)) text.append(separator(" |"));
 		return text;
 	}
 
-	private static boolean endsWithSeparator(Text text) {
-		String value = text.getString();
-		return value.endsWith(" | ") || value.endsWith(" |");
+	private static boolean boundaryHasSeparator(FlowTierClientConfig.NametagComponent left, FlowTierClientConfig.NametagComponent right) {
+		return FlowTierClientConfig.hasSeparator(left, FlowTierClientConfig.Edge.RIGHT) || FlowTierClientConfig.hasSeparator(right, FlowTierClientConfig.Edge.LEFT);
+	}
+
+	private static boolean isVisible(FlowTierClientConfig.NametagComponent component, FlowTierStats.LadderStats ladder) {
+		return switch (component) {
+			case GAMEMODE_ICON -> FlowTierClientConfig.gamemodeIconEnabled;
+			case TIER -> FlowTierClientConfig.tierEnabled;
+			case ELO -> FlowTierClientConfig.eloEnabled;
+			case POSITION -> FlowTierClientConfig.positionEnabled && ladder.hasPosition();
+		};
+	}
+
+	private static Text moduleText(FlowTierClientConfig.NametagComponent component, FlowTierStats.LadderStats ladder) {
+		return switch (component) {
+			case GAMEMODE_ICON -> icon(ladder.ladder());
+			case TIER -> FlowTierClientConfig.coloredTier
+					? Text.literal(tierLabel(ladder)).setStyle(Style.EMPTY.withColor(tierColor(ladder.tierLabel(), ladder.position())))
+					: Text.literal(tierLabel(ladder)).formatted(Formatting.WHITE);
+			case ELO -> {
+				Style style = Style.EMPTY.withColor(FlowTierClientConfig.coloredElo ? ratingColor(ladder.totalRating()) : 0xFFFFFF);
+				yield Text.literal(Integer.toString(ladder.totalRating()) + (FlowTierClientConfig.eloLabelEnabled ? " " + FlowTierRankSystem.RATING_LABEL : "")).setStyle(style);
+			}
+			case POSITION -> Text.literal((FlowTierClientConfig.positionLabelEnabled ? "#" : "") + ladder.position())
+					.setStyle(Style.EMPTY.withColor(FlowTierClientConfig.coloredPosition ? positionColor(ladder.tierLabel(), ladder.position()) : 0xFFFFFF));
+		};
 	}
 
 	private static MutableText separator(String value) {

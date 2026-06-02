@@ -16,7 +16,9 @@ public class NametagLayoutButtonEntry extends TooltipListEntry<Void> {
     private final Button button;
 
     public NametagLayoutButtonEntry(Screen parent) {
-        super(Component.literal("Nametag Layout"), null);
+        super(Component.literal("Nametag Layout"), () -> Optional.of(new Component[] {
+                Component.literal("Drag modules to either side of the player name and right-click them to configure separators.")
+        }));
         this.button = Button.builder(
                 Component.literal("Edit Nametag Layout..."),
                 btn -> {

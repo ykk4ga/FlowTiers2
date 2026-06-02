@@ -27,23 +27,8 @@ public class PlayerEntityRendererMixin {
 
 		FlowTiersClientState.cache().fetch(player.getUuid());
 		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
-			Text suffix = FlowTierFormatter.compact(stats);
-			String suffixStr = suffix.getString();
-			if (suffixStr.isEmpty()) return;
-
 			Text currentName = renderName(player, state);
-
-			if (currentName != null && currentName.getString().contains(suffixStr)) return;
-
-			if (FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT) {
-				state.displayName = suffix.copy()
-						.append(Text.literal(" "))
-						.append(currentName == null ? Text.empty() : currentName);
-			} else {
-				state.displayName = (currentName == null ? Text.empty() : currentName.copy())
-						.append(Text.literal(" "))
-						.append(suffix);
-			}
+			state.displayName = FlowTierFormatter.nametag(stats, currentName == null ? Text.empty() : currentName);
 		});
 	}
 

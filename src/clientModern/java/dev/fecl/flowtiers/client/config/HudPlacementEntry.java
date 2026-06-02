@@ -18,7 +18,9 @@ final class HudPlacementEntry extends TooltipListEntry<Void> {
 	private final ButtonWidget button;
 
 	HudPlacementEntry() {
-		super(Text.literal("HUD position"), null);
+		super(Text.literal("HUD position"), () -> Optional.of(new Text[] {
+				Text.literal("Opens a placement screen where you can drag the FlowTiers HUD.")
+		}));
 		this.button = ButtonWidget.builder(
 				Text.literal("Place HUD"),
 				btn -> {

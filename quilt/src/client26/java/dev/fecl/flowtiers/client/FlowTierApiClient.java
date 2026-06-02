@@ -17,7 +17,7 @@ import com.google.gson.JsonObject;
 public final class FlowTierApiClient {
 	private static final URI BASE_URI = URI.create("https://flowpvp.gg/api/");
 	private static final Duration TIMEOUT = Duration.ofSeconds(8);
-	private static final String USER_AGENT = "FlowTiers/1.8 (micahcode or .fecl. on Discord)";
+	private static final String USER_AGENT = "FlowTiers/1.14 (Disc: .fecl. X: @FeclMC)";
 	private static final Gson GSON = new Gson();
 
 	private final HttpClient httpClient = HttpClient.newBuilder()

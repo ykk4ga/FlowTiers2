@@ -20,6 +20,7 @@ public final class FlowTiersNeoForgeClient {
 
 		NeoForge.EVENT_BUS.addListener((RegisterClientCommandsEvent event) -> FlowTierCommands.register(event, cache));
 		NeoForge.EVENT_BUS.addListener((RenderGuiEvent.Post event) -> FlowTierHud.render(event, cache));
+		FlowTierVersionChecker.register();
 		NeoForge.EVENT_BUS.addListener((ClientChatReceivedEvent event) -> {
 			if (!event.getMessage().getString().contains("SR Change")) return;
 			Minecraft client = Minecraft.getInstance();

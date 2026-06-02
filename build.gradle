@@ -68,6 +68,13 @@ if (targetMinecraft.startsWith("26.")) {
 
 def oldRenderTargets = ["1.21", "1.21.1"] as Set
 def midRenderTargets = ["1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8"] as Set
+def legacyMatrixTargets = ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5"] as Set
+if (!targetMinecraft.startsWith("26.")) {
+	sourceSets.client.java {
+		srcDir legacyMatrixTargets.contains(targetMinecraft) ? "src/clientMatrixLegacy/java" : "src/clientMatrixModern/java"
+	}
+}
+
 if (targetMinecraft.startsWith("26.")) {
 	sourceSets.client.resources {
 		exclude "flowtiers.client.mixins.json"
@@ -170,6 +177,18 @@ tasks.register("buildAllMcVersions") {
 	group = "build"
 	description = "Builds FlowTiers for every configured Minecraft release target."
 	dependsOn flowTiersVersions.keySet().collect { "buildMc${it.replace(".", "_").replace("-", "_")}" }
+}
+
+tasks.register("publishModrinthFabric", Exec) {
+	group = "publishing"
+	description = "Publishes the already-built Fabric JAR matrix to Modrinth."
+	commandLine "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", file("scripts/publish-modrinth.ps1")
+}
+
+tasks.register("syncModrinthDescription", Exec) {
+	group = "publishing"
+	description = "Syncs desc.md to the Modrinth project page."
+	commandLine "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", file("scripts/publish-modrinth.ps1"), "-SyncDescriptionOnly"
 }
 
 // configure the maven publication

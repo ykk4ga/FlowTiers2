@@ -67,6 +67,26 @@ Build every configured Minecraft target:
 .\gradlew.bat buildAllMcVersions
 ```
 
+## Publishing To Modrinth
+
+Keep your Modrinth personal access token in the `MODRINTH_TOKEN` environment variable. After building every supported version, publish the finished Fabric JARs with:
+
+```powershell
+.\gradlew.bat publishModrinthFabric
+```
+
+Each Minecraft version is published as its own correctly labeled Modrinth version. To sync the Modrinth project page from `desc.md`, run:
+
+```powershell
+.\gradlew.bat syncModrinthDescription
+```
+
+To inspect the planned uploads without contacting Modrinth, run:
+
+```powershell
+.\scripts\publish-modrinth.ps1 -DryRun
+```
+
 PowerShell users should keep the `"-Ptarget_mc=..."` argument quoted.
 
 Build outputs are written to:

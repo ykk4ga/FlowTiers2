@@ -7,8 +7,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
+import dev.fecl.flowtiers.client.FlowTierClientConfig;
 import dev.fecl.flowtiers.client.FlowTierFormatter;
 import dev.fecl.flowtiers.client.FlowTierStats;
+import dev.fecl.flowtiers.client.FlowTierStatsClipboard;
 import dev.fecl.flowtiers.client.FlowTiersClientState;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -62,6 +64,7 @@ public final class FlowTierPlayerStatsScreen extends Screen {
         this.uuid = UUID.fromString(uuid);
         this.fallbackName = fallbackName;
         this.selectedLadder = autoOpenLadder;
+        FlowTierClientConfig.recordPlayerVisit(this.uuid.toString(), fallbackName);
         if (autoOpenLadder != null) this.historyLoading = true;
     }
 
@@ -85,6 +88,14 @@ public final class FlowTierPlayerStatsScreen extends Screen {
                 if (minecraft != null) minecraft.setScreen(parent);
             }
         }).bounds(panelLeft(), height - 26, 78, 18).build());
+        addRenderableWidget(Button.builder(Component.literal("Copy profile link"), btn -> copyProfileLink())
+                .bounds(panelLeft() + 84, height - 26, 104, 18).build());
+        addRenderableWidget(Button.builder(Component.literal("Copy stats"), btn -> copyStats())
+                .bounds(panelLeft() + 194, height - 26, 82, 18).build());
+        addRenderableWidget(Button.builder(Component.literal(FlowTierClientConfig.isFavorite(uuid.toString()) ? "Remove favorite" : "Add favorite"), btn -> {
+            FlowTierClientConfig.toggleFavorite(uuid.toString(), fallbackName);
+            init();
+        }).bounds(panelLeft() + 282, height - 26, 104, 18).build());
 
         if (selectedLadder == null) {
             var cached = FlowTiersClientState.cache().getIfFresh(uuid);
@@ -444,6 +455,15 @@ public final class FlowTierPlayerStatsScreen extends Screen {
         if (ts <= 0) return "";
         long ms = ts < 10_000_000_000L ? ts * 1000L : ts;
         return GRAPH_DATE.format(Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()));
+    }
+
+    private void copyProfileLink() {
+        if (minecraft != null) minecraft.keyboardHandler.setClipboard("https://flowpvp.gg/user/" + fallbackName);
+    }
+
+    private void copyStats() {
+        if (minecraft == null) return;
+        minecraft.keyboardHandler.setClipboard(FlowTierStatsClipboard.format(fallbackName, FlowTiersClientState.cache().getIfFresh(uuid).orElse(null)));
     }
 
     @Override

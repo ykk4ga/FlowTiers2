@@ -17,7 +17,9 @@ public class NametagLayoutButtonEntry extends TooltipListEntry<Void> {
     private final Screen configScreen;
 
     public NametagLayoutButtonEntry(Screen configScreen) {
-        super(Text.literal("Nametag Layout"), null);
+        super(Text.literal("Nametag Layout"), () -> Optional.of(new Text[] {
+                Text.literal("Drag modules to either side of the player name and right-click them to configure separators.")
+        }));
         this.configScreen = configScreen;
         this.button = ButtonWidget.builder(
                 Text.literal("Edit Nametag Layout..."),

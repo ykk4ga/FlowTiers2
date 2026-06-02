@@ -32,29 +32,8 @@ public class LunarPlayerEntityMixin {
 		Player player = (Player) (Object) this;
 		FlowTiersClientState.cache().fetch(player.getUUID());
 		FlowTiersClientState.cache().getIfFresh(player.getUUID()).ifPresent(stats -> {
-			Component suffix = FlowTierFormatter.compact(stats);
-			String suffixString = suffix.getString();
-			if (suffixString.isEmpty()) return;
-
-			String originalString = original == null ? "" : original.getString();
-			if (originalString.contains(suffixString)) return;
-
 			Component baseName = original == null ? player.getName() : original;
-			Component name = FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT
-					? suffix.copy().append(joiner(suffix, baseName)).append(baseName)
-					: baseName.copy().append(joiner(baseName, suffix)).append(suffix);
-			cir.setReturnValue(name);
+			cir.setReturnValue(FlowTierFormatter.nametag(stats, baseName));
 		});
-	}
-
-	private static Component joiner(Component left, Component right) {
-		String leftValue = left.getString();
-		String rightValue = right.getString();
-		return hasSeparatorEdge(leftValue, rightValue) || leftValue.endsWith(" ") || rightValue.startsWith(" ")
-				? Component.empty() : Component.literal(" ");
-	}
-
-	private static boolean hasSeparatorEdge(String left, String right) {
-		return left.endsWith("|") || right.startsWith("|");
 	}
 }

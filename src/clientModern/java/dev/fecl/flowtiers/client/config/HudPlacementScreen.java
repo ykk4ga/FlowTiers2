@@ -31,6 +31,10 @@ final class HudPlacementScreen extends Screen {
 		addDrawableChild(ButtonWidget.builder(Text.literal("Done"), button -> close())
 				.dimensions(width / 2 - 42, height - 26, 84, 18)
 				.build());
+		addDrawableChild(ButtonWidget.builder(Text.literal("-"), button -> adjustScale(-0.1F))
+				.dimensions(width / 2 - 58, 60, 24, 18).build());
+		addDrawableChild(ButtonWidget.builder(Text.literal("+"), button -> adjustScale(0.1F))
+				.dimensions(width / 2 + 34, 60, 24, 18).build());
 	}
 
 	@Override
@@ -44,9 +48,10 @@ final class HudPlacementScreen extends Screen {
 			}
 		}
 
-		context.fill(0, 0, width, height, 0xD0101420);
 		context.drawCenteredTextWithShadow(textRenderer, "Drag the FlowTiers HUD", width / 2, 18, 0xFFFFFFFF);
 		context.drawCenteredTextWithShadow(textRenderer, "Release to save. Esc or Done returns to config.", width / 2, 32, 0xFF9CA3AF);
+		context.drawCenteredTextWithShadow(textRenderer, "X: " + FlowTierClientConfig.hudX + "  Y: " + FlowTierClientConfig.hudY + "  Scale: " + scalePercent() + "%", width / 2, 46, 0xFF93C5FD);
+		drawGuides(context, FlowTierClientConfig.hudX, FlowTierClientConfig.hudY);
 		drawPreview(context, FlowTierClientConfig.hudX, FlowTierClientConfig.hudY);
 		super.render(context, mouseX, mouseY, delta);
 	}
@@ -85,12 +90,12 @@ final class HudPlacementScreen extends Screen {
 		TextRenderer renderer = textRenderer;
 		int previewWidth = previewWidth();
 		int previewHeight = previewHeight();
-
-		context.fill(x, y, x + previewWidth, y + previewHeight, 0xAA000000);
-		drawBorder(context, x, y, previewWidth, previewHeight, dragging ? 0xFF93C5FD : 0xFF3B82F6);
-
-		int tx = x + PADDING;
-		int ty = y + PADDING;
+		context.getMatrices().pushMatrix();
+		context.getMatrices().translate(x, y);
+		context.getMatrices().scale(FlowTierClientConfig.hudScale, FlowTierClientConfig.hudScale);
+		context.fill(0, 0, basePreviewWidth(), basePreviewHeight(), FlowTierClientConfig.hudBackground ? 0xAA000000 : 0x44000000);
+		int tx = PADDING;
+		int ty = PADDING;
 		Text title = Text.literal("FlowTiers");
 		context.drawTextWithShadow(renderer, title, tx, ty, FLOW_BLUE);
 		context.drawTextWithShadow(renderer, FlowTierFormatter.icon("SWORD"), tx + renderer.getWidth(title) + renderer.getWidth("  "), ty, 0xFFFFFFFF);
@@ -100,6 +105,10 @@ final class HudPlacementScreen extends Screen {
 		context.drawTextWithShadow(renderer, "#123 Sword", tx, ty, 0xFFFFD700);
 		ty += LINE_HEIGHT;
 		context.drawTextWithShadow(renderer, "12W 4L", tx, ty, 0xFFAAAAAA);
+		context.getMatrices().popMatrix();
+		drawBorder(context, x - 2, y - 2, previewWidth + 4, previewHeight + 4, dragging ? 0xFFFFFFFF : 0xFF93C5FD);
+		drawBorder(context, x, y, previewWidth, previewHeight, dragging ? 0xFF93C5FD : 0xFF3B82F6);
+		drawHandles(context, x, y, previewWidth, previewHeight);
 	}
 
 	private boolean isInsidePreview(int mouseX, int mouseY) {
@@ -108,7 +117,7 @@ final class HudPlacementScreen extends Screen {
 		return mouseX >= x && mouseX <= x + previewWidth() && mouseY >= y && mouseY <= y + previewHeight();
 	}
 
-	private int previewWidth() {
+	private int basePreviewWidth() {
 		MinecraftClient client = MinecraftClient.getInstance();
 		TextRenderer renderer = client.textRenderer;
 		int width = renderer.getWidth("FlowTiers  ") + renderer.getWidth(FlowTierFormatter.icon("SWORD"));
@@ -118,8 +127,17 @@ final class HudPlacementScreen extends Screen {
 		return width + PADDING * 2;
 	}
 
-	private int previewHeight() {
+	private int basePreviewHeight() {
 		return 4 * LINE_HEIGHT + PADDING * 2;
+	}
+
+	private int previewWidth() { return Math.round(basePreviewWidth() * FlowTierClientConfig.hudScale); }
+	private int previewHeight() { return Math.round(basePreviewHeight() * FlowTierClientConfig.hudScale); }
+	private int scalePercent() { return Math.round(FlowTierClientConfig.hudScale * 100); }
+	private void adjustScale(float delta) {
+		FlowTierClientConfig.hudScale = FlowTierClientConfig.clampHudScale(FlowTierClientConfig.hudScale + delta);
+		setHudPosition(FlowTierClientConfig.hudX, FlowTierClientConfig.hudY);
+		FlowTierClientConfig.save();
 	}
 
 	private boolean leftMouseReleased() {
@@ -136,5 +154,19 @@ final class HudPlacementScreen extends Screen {
 		context.fill(x, y + height - 1, x + width, y + height, color);
 		context.fill(x, y, x + 1, y + height, color);
 		context.fill(x + width - 1, y, x + width, y + height, color);
+	}
+
+	private void drawGuides(DrawContext context, int x, int y) {
+		int cx = x + previewWidth() / 2;
+		int cy = y + previewHeight() / 2;
+		context.fill(cx, 58, cx + 1, height - 30, 0x6638BDF8);
+		context.fill(0, cy, width, cy + 1, 0x6638BDF8);
+	}
+
+	private static void drawHandles(DrawContext context, int x, int y, int width, int height) {
+		context.fill(x - 3, y - 3, x + 2, y + 2, 0xFFFFFFFF);
+		context.fill(x + width - 2, y - 3, x + width + 3, y + 2, 0xFFFFFFFF);
+		context.fill(x - 3, y + height - 2, x + 2, y + height + 3, 0xFFFFFFFF);
+		context.fill(x + width - 2, y + height - 2, x + width + 3, y + height + 3, 0xFFFFFFFF);
 	}
 }

@@ -47,6 +47,7 @@ sourceSets {
 			} else {
 				srcDir "src/${targetConfig.sourceSet}/java"
 				srcDir "src/mc21/java"
+				srcDir(["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5"].contains(targetMinecraft) ? "src/mc21MatrixLegacy/java" : "src/mc21MatrixModern/java")
 			}
 		}
 		resources {

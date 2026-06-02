@@ -23,21 +23,50 @@ public final class FlowTierFormatter {
 		if (ladder == null || !ladder.hasPlayedRanked()) {
 			return Component.literal("Unranked").withStyle(ChatFormatting.GRAY);
 		}
-		return decorated(ladder);
+		Component left = decorated(ladder, FlowTierClientConfig.nametagLeftOrder);
+		Component right = decorated(ladder, FlowTierClientConfig.nametagRightOrder);
+		if (left.getString().isEmpty()) return right;
+		if (right.getString().isEmpty()) return left;
+		return left.copy().append(Component.literal(" ")).append(right);
+	}
+
+	public static Component nametag(FlowTierStats stats, Component playerName) {
+		FlowTierStats.LadderStats ladder = stats.displayLadder().orElse(null);
+		if (ladder == null || !ladder.hasPlayedRanked()) return playerName;
+		Component left = decorated(ladder, FlowTierClientConfig.nametagLeftOrder);
+		Component right = decorated(ladder, FlowTierClientConfig.nametagRightOrder);
+		if (alreadyDecorated(playerName, left, right)) return playerName;
+		MutableComponent text = Component.empty();
+		if (!left.getString().isEmpty()) text.append(left).append(Component.literal(" "));
+		text.append(playerName);
+		if (!right.getString().isEmpty()) text.append(Component.literal(" ")).append(right);
+		return text;
+	}
+
+	private static boolean alreadyDecorated(Component playerName, Component left, Component right) {
+		String name = playerName.getString();
+		String leftValue = left.getString();
+		String rightValue = right.getString();
+		boolean hasLayout = !leftValue.isEmpty() || !rightValue.isEmpty();
+		return hasLayout
+				&& (leftValue.isEmpty() || name.contains(leftValue))
+				&& (rightValue.isEmpty() || name.contains(rightValue));
 	}
 
 	public static Component previewCompact() {
 		Minecraft client = Minecraft.getInstance();
 		if (client != null && client.player != null) {
+			FlowTiersClientState.cache().fetch(client.player.getUUID());
 			FlowTierStats real = FlowTiersClientState.cache()
 					.getIfFresh(client.player.getUUID()).orElse(null);
-			if (real != null) return compact(real);
+			if (real != null) return Component.literal("Preview: ").withStyle(ChatFormatting.GRAY).append(nametag(real, client.player.getName()));
 		}
 		FlowTierStats.LadderStats fake = new FlowTierStats.LadderStats(
 				FlowTierClientConfig.preferredLadder,
 				800, 10, 5, 2, 10, "MT4", 123
 		);
-		return decorated(fake);
+		return Component.literal("Preview: ").withStyle(ChatFormatting.GRAY)
+				.append(nametag(new FlowTierStats(java.util.UUID.randomUUID(), "PlayerName", Map.of(fake.ladder(), fake), 0L), Component.literal("PlayerName")));
 	}
 
 	public static Component details(FlowTierStats stats) {
@@ -77,59 +106,29 @@ public final class FlowTierFormatter {
 				.append(Component.literal(Integer.toString(ladder.position())).withStyle(ChatFormatting.WHITE));
 	}
 
-	private static Component decorated(FlowTierStats.LadderStats ladder) {
+	private static Component decorated(FlowTierStats.LadderStats ladder, List<FlowTierClientConfig.NametagComponent> order) {
 		MutableComponent text = Component.empty();
-		boolean wrotePart = false;
-
-		for (int componentIndex = 0; componentIndex < FlowTierClientConfig.nametagOrder.size(); componentIndex++) {
-			FlowTierClientConfig.NametagComponent component = FlowTierClientConfig.nametagOrder.get(componentIndex);
-			switch (component) {
-				case GAMEMODE_ICON -> {
-					if (!FlowTierClientConfig.gamemodeIconEnabled) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" "));
-					text.append(icon(ladder.ladder()));
-					wrotePart = true;
-				}
-				case TIER -> {
-					if (!FlowTierClientConfig.tierEnabled) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" "));
-					if (FlowTierClientConfig.coloredTier) {
-						text.append(Component.literal(tierLabel(ladder)).withStyle(s -> s.withColor(tierColor(ladder.tierLabel(), ladder.position()))));
-					} else {
-						text.append(Component.literal(tierLabel(ladder)).withStyle(ChatFormatting.WHITE));
-					}
-					wrotePart = true;
-				}
-				case SEPARATOR -> {
-					if (!FlowTierClientConfig.separatorEnabled) continue;
-					if (!endsWithSeparator(text)) text.append(separator(text.getString().isEmpty() ? "|" : " |"));
-					wrotePart = true;
-				}
-				case ELO -> {
-					if (!FlowTierClientConfig.eloEnabled) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" "));
-					int color = FlowTierClientConfig.coloredElo ? ratingColor(ladder.totalRating()) : 0xFFFFFF;					text.append(Component.literal(Integer.toString(ladder.totalRating())).withStyle(s -> s.withColor(color)));
-					if (FlowTierClientConfig.eloLabelEnabled)
-						text.append(Component.literal(" " + FlowTierRankSystem.RATING_LABEL).withStyle(s -> s.withColor(color)));
-					wrotePart = true;
-				}
-				case POSITION -> {
-					if (!FlowTierClientConfig.positionEnabled || !ladder.hasPosition()) continue;
-					if (wrotePart && !endsWithSeparator(text)) text.append(Component.literal(" "));
-					int posColor = FlowTierClientConfig.coloredPosition ? positionColor(ladder.tierLabel(), ladder.position()) : 0xFFFFFF;
-					if (FlowTierClientConfig.positionLabelEnabled)
-						text.append(Component.literal("#").withStyle(s -> s.withColor(posColor)));
-					text.append(Component.literal(Integer.toString(ladder.position())).withStyle(s -> s.withColor(posColor)));
-					wrotePart = true;
-				}
-			}
+		List<FlowTierClientConfig.NametagComponent> visible = order.stream().filter(component -> isVisible(component, ladder)).toList();
+		if (visible.isEmpty()) return text;
+		if (FlowTierClientConfig.separatorEnabled && FlowTierClientConfig.hasSeparator(visible.get(0), FlowTierClientConfig.Edge.LEFT)) text.append(separator("| "));
+		for (int i = 0; i < visible.size(); i++) {
+			FlowTierClientConfig.NametagComponent component = visible.get(i);
+			if (i > 0) text.append(FlowTierClientConfig.separatorEnabled && boundaryHasSeparator(visible.get(i - 1), component) ? separator(" | ") : Component.literal(" "));
+			text.append(moduleText(component, ladder));
 		}
+		if (FlowTierClientConfig.separatorEnabled && FlowTierClientConfig.hasSeparator(visible.get(visible.size() - 1), FlowTierClientConfig.Edge.RIGHT)) text.append(separator(" |"));
 		return text;
 	}
 
-	private static boolean endsWithSeparator(Component text) {
-		String value = text.getString();
-		return value.endsWith(" | ") || value.endsWith(" |");
+	private static boolean boundaryHasSeparator(FlowTierClientConfig.NametagComponent left, FlowTierClientConfig.NametagComponent right) { return FlowTierClientConfig.hasSeparator(left, FlowTierClientConfig.Edge.RIGHT) || FlowTierClientConfig.hasSeparator(right, FlowTierClientConfig.Edge.LEFT); }
+	private static boolean isVisible(FlowTierClientConfig.NametagComponent component, FlowTierStats.LadderStats ladder) { return switch (component) { case GAMEMODE_ICON -> FlowTierClientConfig.gamemodeIconEnabled; case TIER -> FlowTierClientConfig.tierEnabled; case ELO -> FlowTierClientConfig.eloEnabled; case POSITION -> FlowTierClientConfig.positionEnabled && ladder.hasPosition(); }; }
+	private static Component moduleText(FlowTierClientConfig.NametagComponent component, FlowTierStats.LadderStats ladder) {
+		return switch (component) {
+			case GAMEMODE_ICON -> icon(ladder.ladder());
+			case TIER -> FlowTierClientConfig.coloredTier ? Component.literal(tierLabel(ladder)).withStyle(s -> s.withColor(tierColor(ladder.tierLabel(), ladder.position()))) : Component.literal(tierLabel(ladder)).withStyle(ChatFormatting.WHITE);
+			case ELO -> { int color = FlowTierClientConfig.coloredElo ? ratingColor(ladder.totalRating()) : 0xFFFFFF; yield Component.literal(Integer.toString(ladder.totalRating()) + (FlowTierClientConfig.eloLabelEnabled ? " " + FlowTierRankSystem.RATING_LABEL : "")).withStyle(s -> s.withColor(color)); }
+			case POSITION -> { int color = FlowTierClientConfig.coloredPosition ? positionColor(ladder.tierLabel(), ladder.position()) : 0xFFFFFF; yield Component.literal((FlowTierClientConfig.positionLabelEnabled ? "#" : "") + ladder.position()).withStyle(s -> s.withColor(color)); }
+		};
 	}
 
 	private static MutableComponent separator(String value) {

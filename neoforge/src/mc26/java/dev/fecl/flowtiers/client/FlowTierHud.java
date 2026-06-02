@@ -69,15 +69,19 @@ public final class FlowTierHud {
 		int lines = 2 + (positionLine != null ? 1 : 0) + (recordLine != null ? 1 : 0);
 		int widgetWidth = width + PADDING * 2;
 		int widgetHeight = lines * LINE_HEIGHT + PADDING * 2;
-		int x = clamp(FlowTierClientConfig.hudX, 0, client.getWindow().getGuiScaledWidth() - widgetWidth);
-		int y = clamp(FlowTierClientConfig.hudY, 0, client.getWindow().getGuiScaledHeight() - widgetHeight);
+		float scale = FlowTierClientConfig.hudScale;
+		int x = clamp(FlowTierClientConfig.hudX, 0, client.getWindow().getGuiScaledWidth() - Math.round(widgetWidth * scale));
+		int y = clamp(FlowTierClientConfig.hudY, 0, client.getWindow().getGuiScaledHeight() - Math.round(widgetHeight * scale));
+		graphics.pose().pushMatrix();
+		graphics.pose().translate(x, y);
+		graphics.pose().scale(scale, scale);
 
 		if (FlowTierClientConfig.hudBackground) {
-			graphics.fill(x, y, x + widgetWidth, y + widgetHeight, BACKGROUND);
+			graphics.fill(0, 0, widgetWidth, widgetHeight, BACKGROUND);
 		}
 
-		int tx = x + PADDING;
-		int ty = y + PADDING;
+		int tx = PADDING;
+		int ty = PADDING;
 		graphics.text(font, header, tx, ty, FLOW_BLUE, true);
 		if (icon != null) {
 			graphics.text(font, icon, tx + font.width(header) + font.width("  "), ty, WHITE, true);
@@ -95,6 +99,7 @@ public final class FlowTierHud {
 		if (recordLine != null) {
 			graphics.text(font, recordLine, tx, ty, GRAY, true);
 		}
+		graphics.pose().popMatrix();
 	}
 
 	private static String tierLine(FlowTierStats.LadderStats ladder) {

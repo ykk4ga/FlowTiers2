@@ -72,15 +72,17 @@ public final class FlowTierHud {
 		int lines = 2 + (positionLine != null ? 1 : 0) + (recordLine != null ? 1 : 0);
 		int widgetWidth = width + PADDING * 2;
 		int widgetHeight = lines * LINE_HEIGHT + PADDING * 2;
-		int x = clamp(FlowTierClientConfig.hudX, 0, client.getWindow().getScaledWidth() - widgetWidth);
-		int y = clamp(FlowTierClientConfig.hudY, 0, client.getWindow().getScaledHeight() - widgetHeight);
+		float scale = FlowTierClientConfig.hudScale;
+		int x = clamp(FlowTierClientConfig.hudX, 0, client.getWindow().getScaledWidth() - Math.round(widgetWidth * scale));
+		int y = clamp(FlowTierClientConfig.hudY, 0, client.getWindow().getScaledHeight() - Math.round(widgetHeight * scale));
+		FlowTierHudScaleTransform.push(context, x, y, scale);
 
 		if (FlowTierClientConfig.hudBackground) {
-			context.fill(x, y, x + widgetWidth, y + widgetHeight, BACKGROUND);
+			context.fill(0, 0, widgetWidth, widgetHeight, BACKGROUND);
 		}
 
-		int tx = x + PADDING;
-		int ty = y + PADDING;
+		int tx = PADDING;
+		int ty = PADDING;
 		context.drawTextWithShadow(textRenderer, header, tx, ty, FLOW_BLUE);
 		if (icon != null) {
 			context.drawTextWithShadow(textRenderer, icon, tx + textRenderer.getWidth(header) + textRenderer.getWidth("  "), ty, WHITE);
@@ -98,6 +100,7 @@ public final class FlowTierHud {
 		if (recordLine != null) {
 			context.drawTextWithShadow(textRenderer, recordLine, tx, ty, GRAY);
 		}
+		FlowTierHudScaleTransform.pop(context);
 	}
 
 	private static String tierLine(FlowTierStats.LadderStats ladder) {

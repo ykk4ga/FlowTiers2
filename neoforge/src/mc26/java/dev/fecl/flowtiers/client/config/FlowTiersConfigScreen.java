@@ -15,7 +15,7 @@ public final class FlowTiersConfigScreen extends Screen {
 			"SWORD", "AXE", "UHC", "VANILLA", "MACE", "SPEAR_MACE", "CART",
 			"DIAMOND_POT", "NETHERITE_OP", "SMP", "DIAMOND_SMP", "GLOBAL"
 	};
-	private static final int PANEL_WIDTH = 340;
+	private static final int PANEL_WIDTH = 506;
 	private static final int BUTTON_WIDTH = 158;
 	private static final int BUTTON_HEIGHT = 20;
 	private static final int ROW_GAP = 24;
@@ -44,9 +44,11 @@ public final class FlowTiersConfigScreen extends Screen {
 		y = section(y);
 		addRenderableWidget(toggle(x, y, "HUD overlay", () -> FlowTierClientConfig.hudEnabled, value -> FlowTierClientConfig.hudEnabled = value));
 		addRenderableWidget(toggle(x + 166, y, "HUD background", () -> FlowTierClientConfig.hudBackground, value -> FlowTierClientConfig.hudBackground = value));
+		addRenderableWidget(cycle(x + 332, y, BUTTON_WIDTH, () -> "HUD scale: " + Math.round(FlowTierClientConfig.hudScale * 100) + "%", FlowTiersConfigScreen::nextHudScale));
 		y += ROW_GAP;
 		addRenderableWidget(toggle(x, y, "Win/loss line", () -> FlowTierClientConfig.hudRecordEnabled, value -> FlowTierClientConfig.hudRecordEnabled = value));
 		addRenderableWidget(toggle(x + 166, y, "Streak line", () -> FlowTierClientConfig.hudStreakEnabled, value -> FlowTierClientConfig.hudStreakEnabled = value));
+		addRenderableWidget(toggle(x + 332, y, "Update checker", () -> FlowTierClientConfig.versionCheckEnabled, value -> FlowTierClientConfig.versionCheckEnabled = value));
 		y += ROW_GAP + SECTION_GAP;
 
 		y = section(y);
@@ -56,8 +58,8 @@ public final class FlowTiersConfigScreen extends Screen {
 
 		addRenderableWidget(toggle(x, y, "Hide duplicates", () -> FlowTierClientConfig.suppressRankedDuplicates, value -> FlowTierClientConfig.suppressRankedDuplicates = value));
 		addRenderableWidget(cycle(x + 166, y, BUTTON_WIDTH, () -> "Placement: " + pretty(FlowTierClientConfig.nametagAlignment.name()),
-				() -> FlowTierClientConfig.nametagAlignment = FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT
-						? FlowTierClientConfig.NametagAlignment.RIGHT : FlowTierClientConfig.NametagAlignment.LEFT));
+				() -> FlowTierClientConfig.placeNametagModules(FlowTierClientConfig.nametagAlignment == FlowTierClientConfig.NametagAlignment.LEFT
+						? FlowTierClientConfig.NametagAlignment.RIGHT : FlowTierClientConfig.NametagAlignment.LEFT)));
 		y += ROW_GAP + SECTION_GAP;
 
 		y = section(y);
@@ -171,5 +173,10 @@ public final class FlowTiersConfigScreen extends Screen {
 			}
 		}
 		FlowTierClientConfig.preferredLadder = LADDERS[0];
+	}
+
+	private static void nextHudScale() {
+		float next = FlowTierClientConfig.hudScale + 0.1F;
+		FlowTierClientConfig.hudScale = FlowTierClientConfig.clampHudScale(next > 2.0F ? 0.5F : next);
 	}
 }
