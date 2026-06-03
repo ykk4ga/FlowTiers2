@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import dev.fecl.flowtiers.client.FlowTierClientConfig;
 import dev.fecl.flowtiers.client.FlowTierFormatter;
+import dev.fecl.flowtiers.client.FlowTierSeasonArchive;
 import dev.fecl.flowtiers.client.FlowTierStats;
 import dev.fecl.flowtiers.client.FlowTierStatsClipboard;
 import dev.fecl.flowtiers.client.FlowTiersClientState;
@@ -41,6 +42,7 @@ public final class FlowTierPlayerStatsScreen extends Screen {
     private final String fallbackName;
     private boolean loaded;
     private boolean failed;
+    private int selectedSeason = -1;
 
     private String selectedLadder = null;
     private List<FlowTierLeaderboardClient.HistoryPoint> historyPoints = null;
@@ -96,8 +98,17 @@ public final class FlowTierPlayerStatsScreen extends Screen {
             FlowTierClientConfig.toggleFavorite(uuid.toString(), fallbackName);
             init();
         }).bounds(panelLeft() + 282, height - 26, 104, 18).build());
+        List<FlowTierSeasonArchive.Season> seasons = FlowTierSeasonArchive.seasonsFor(uuid);
+        if (!seasons.isEmpty()) {
+            addRenderableWidget(Button.builder(Component.literal(seasonButtonLabel(seasons)), btn -> {
+                selectedLadder = null;
+                selectedSeason++;
+                if (selectedSeason >= seasons.size()) selectedSeason = -1;
+                init();
+            }).bounds(panelLeft() + 392, height - 26, 132, 18).build());
+        }
 
-        if (selectedLadder == null) {
+        if (selectedLadder == null && selectedSeason < 0) {
             var cached = FlowTiersClientState.cache().getIfFresh(uuid);
             if (cached.isPresent()) addLadderButtons(cached.get());
         }
@@ -178,12 +189,13 @@ public final class FlowTierPlayerStatsScreen extends Screen {
 
         ctx.centeredText(font, Component.literal("FLOWPVP  STATS"), width / 2, ht + 6, TEXT_TITLE);
         ctx.centeredText(font, Component.literal(fallbackName), width / 2, ht + 20, TEXT_WHITE);
+        ctx.centeredText(font, Component.literal(selectedSeasonName()), width / 2, ht + 34, TEXT_DIM);
 
         super.extractRenderState(ctx, mx, my, delta);
 
-        var statsOpt = FlowTiersClientState.cache().getIfFresh(uuid);
+        var statsOpt = displayedStats();
         if (statsOpt.isEmpty()) {
-            String msg = loaded || failed ? "No ranked stats found for this player." : "Loading...";
+            String msg = selectedSeason >= 0 ? "No archived stats found for this season." : (loaded || failed ? "No ranked stats found for this player." : "Loading...");
             int col = loaded || failed ? 0xFFFFD166 : TEXT_DIM;
             ctx.centeredText(font, Component.literal(msg), width / 2, tt + 40, col);
             return;
@@ -463,7 +475,26 @@ public final class FlowTierPlayerStatsScreen extends Screen {
 
     private void copyStats() {
         if (minecraft == null) return;
-        minecraft.keyboardHandler.setClipboard(FlowTierStatsClipboard.format(fallbackName, FlowTiersClientState.cache().getIfFresh(uuid).orElse(null)));
+        minecraft.keyboardHandler.setClipboard(FlowTierStatsClipboard.format(fallbackName, displayedStats().orElse(null)));
+    }
+
+    private java.util.Optional<FlowTierStats> displayedStats() {
+        List<FlowTierSeasonArchive.Season> seasons = FlowTierSeasonArchive.seasonsFor(uuid);
+        if (selectedSeason >= 0 && selectedSeason < seasons.size()) {
+            return FlowTierSeasonArchive.stats(uuid, seasons.get(selectedSeason));
+        }
+        return FlowTiersClientState.cache().getIfFresh(uuid);
+    }
+
+    private String selectedSeasonName() {
+        List<FlowTierSeasonArchive.Season> seasons = FlowTierSeasonArchive.seasonsFor(uuid);
+        if (selectedSeason >= 0 && selectedSeason < seasons.size()) return seasons.get(selectedSeason).name();
+        return FlowTierSeasonArchive.currentSeasonName();
+    }
+
+    private String seasonButtonLabel(List<FlowTierSeasonArchive.Season> seasons) {
+        if (selectedSeason >= 0 && selectedSeason < seasons.size()) return "Season: " + seasons.get(selectedSeason).name();
+        return "Season: Current";
     }
 
     @Override

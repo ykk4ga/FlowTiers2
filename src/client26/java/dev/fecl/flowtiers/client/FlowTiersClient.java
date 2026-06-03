@@ -13,6 +13,7 @@ public class FlowTiersClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		FlowTierClientConfig.load();
+		FlowTierSeasonArchive.load();
 		FlowTierCache cache = FlowTiersClientState.cache();
 		FlowTierCommands.register(cache);
 		FlowTierHud.register(cache);

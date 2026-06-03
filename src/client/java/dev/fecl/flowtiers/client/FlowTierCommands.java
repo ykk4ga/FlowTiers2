@@ -32,6 +32,22 @@ public final class FlowTierCommands {
 						.then(ClientCommandManager.literal("ladder")
 								.then(ClientCommandManager.argument("ladder", StringArgumentType.word())
 										.executes(context -> setLadder(context.getSource(), StringArgumentType.getString(context, "ladder")))))
+						.then(ClientCommandManager.literal("season")
+								.executes(context -> showSeason(context.getSource()))
+								.then(ClientCommandManager.literal("current")
+										.then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+												.executes(context -> setCurrentSeason(context.getSource(), StringArgumentType.getString(context, "name")))))
+								.then(ClientCommandManager.literal("start")
+										.then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+												.executes(context -> startSeason(context.getSource(), cache, StringArgumentType.getString(context, "name")))))
+								.then(ClientCommandManager.literal("admins")
+										.executes(context -> listSeasonAdmins(context.getSource()))
+										.then(ClientCommandManager.literal("add")
+												.then(ClientCommandManager.argument("player", StringArgumentType.word())
+														.executes(context -> addSeasonAdmin(context.getSource(), StringArgumentType.getString(context, "player")))))
+										.then(ClientCommandManager.literal("remove")
+												.then(ClientCommandManager.argument("player", StringArgumentType.word())
+														.executes(context -> removeSeasonAdmin(context.getSource(), StringArgumentType.getString(context, "player")))))))
 						.then(ClientCommandManager.literal("refresh")
 								.executes(context -> {
 									FabricClientCommandSource source = context.getSource();
@@ -122,6 +138,61 @@ public final class FlowTierCommands {
 		source.sendFeedback(Text.literal("FlowTiers preferred ladder set to " + FlowTierClientConfig.preferredLadder + ".")
 				.formatted(Formatting.GREEN));
 		return 1;
+	}
+
+	private static int showSeason(FabricClientCommandSource source) {
+		source.sendFeedback(Text.literal("FlowTiers current season: " + FlowTierSeasonArchive.currentSeasonName()).formatted(Formatting.AQUA));
+		return 1;
+	}
+
+	private static int setCurrentSeason(FabricClientCommandSource source, String name) {
+		if (!canManageSeasons(source)) return 0;
+		FlowTierSeasonArchive.setCurrentSeasonName(name);
+		source.sendFeedback(Text.literal("Current FlowTiers season set to " + FlowTierSeasonArchive.currentSeasonName() + ".").formatted(Formatting.GREEN));
+		return 1;
+	}
+
+	private static int startSeason(FabricClientCommandSource source, FlowTierCache cache, String name) {
+		if (!canManageSeasons(source)) return 0;
+		FlowTierSeasonArchive.Season archived = FlowTierSeasonArchive.startNewSeason(name, cache.freshStats());
+		cache.clear();
+		source.sendFeedback(Text.literal("Started FlowTiers season " + FlowTierSeasonArchive.currentSeasonName() + ".").formatted(Formatting.GREEN));
+		source.sendFeedback(Text.literal("Archived cached stats as " + archived.name() + ".").formatted(Formatting.GRAY));
+		return 1;
+	}
+
+	private static int listSeasonAdmins(FabricClientCommandSource source) {
+		source.sendFeedback(Text.literal("FlowTiers season admins: " + String.join(", ", FlowTierClientConfig.seasonAdmins)).formatted(Formatting.GRAY));
+		return 1;
+	}
+
+	private static int addSeasonAdmin(FabricClientCommandSource source, String player) {
+		if (!canManageSeasons(source)) return 0;
+		FlowTierClientConfig.addSeasonAdmin(player);
+		source.sendFeedback(Text.literal("Added FlowTiers season admin " + player + ".").formatted(Formatting.GREEN));
+		return 1;
+	}
+
+	private static int removeSeasonAdmin(FabricClientCommandSource source, String player) {
+		if (!canManageSeasons(source)) return 0;
+		boolean removed = FlowTierClientConfig.removeSeasonAdmin(player);
+		source.sendFeedback(Text.literal((removed ? "Removed" : "Could not find") + " FlowTiers season admin " + player + ".")
+				.formatted(removed ? Formatting.GREEN : Formatting.YELLOW));
+		return removed ? 1 : 0;
+	}
+
+	private static boolean canManageSeasons(FabricClientCommandSource source) {
+		MinecraftClient client = MinecraftClient.getInstance();
+		if (client.player == null) {
+			source.sendError(Text.literal("You need to be in-game."));
+			return false;
+		}
+
+		if (!FlowTierClientConfig.isSeasonAdmin(client.player.getUuid().toString(), client.player.getName().getString())) {
+			source.sendError(Text.literal("You are not allowed to manage FlowTiers seasons on this client."));
+			return false;
+		}
+		return true;
 	}
 
 	private static UUID resolveOnlineUuid(String name) {

@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import dev.fecl.flowtiers.client.FlowTierClientConfig;
-import dev.fecl.flowtiers.client.FlowTierFormatter;
+import dev.fecl.flowtiers.client.FlowTierNametagCache;
 import dev.fecl.flowtiers.client.FlowTiersClientState;
 import dev.fecl.flowtiers.client.RankedMatchDetector;
 import net.fabricmc.loader.api.FabricLoader;
@@ -33,7 +33,7 @@ public class LunarPlayerEntityMixin {
 		FlowTiersClientState.cache().fetch(player.getUUID());
 		FlowTiersClientState.cache().getIfFresh(player.getUUID()).ifPresent(stats -> {
 			Component baseName = original == null ? player.getName() : original;
-			cir.setReturnValue(FlowTierFormatter.nametag(stats, baseName));
+			cir.setReturnValue(FlowTierNametagCache.get(player.getUUID(), stats, baseName));
 		});
 	}
 }

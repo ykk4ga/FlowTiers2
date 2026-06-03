@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import dev.fecl.flowtiers.client.FlowTierClientConfig;
-import dev.fecl.flowtiers.client.FlowTierFormatter;
+import dev.fecl.flowtiers.client.FlowTierNametagCache;
 import dev.fecl.flowtiers.client.FlowTiersClientState;
 import dev.fecl.flowtiers.client.RankedMatchDetector;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
@@ -30,7 +30,7 @@ public class PlayerTabOverlayMixin {
 		FlowTiersClientState.cache().getIfFresh(pid).ifPresent(stats -> {
 			Component name = cir.getReturnValue() == null ? Component.empty() : cir.getReturnValue();
 			Component cleanName = stripLeadingSeparator(name);
-			cir.setReturnValue(FlowTierFormatter.nametag(stats, cleanName));
+			cir.setReturnValue(FlowTierNametagCache.get(pid, stats, cleanName));
 		});
 	}
 

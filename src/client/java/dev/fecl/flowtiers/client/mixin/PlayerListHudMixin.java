@@ -23,7 +23,7 @@ public class PlayerListHudMixin {
 		FlowTiersClientState.cache().fetch(FlowTierMinecraftCompat.profileId(entry.getProfile()));
 		FlowTiersClientState.cache().getIfFresh(FlowTierMinecraftCompat.profileId(entry.getProfile())).ifPresent(stats -> {
 			Text cleanName = stripLeadingSeparator(cir.getReturnValue());
-			cir.setReturnValue(FlowTierFormatter.nametag(stats, cleanName));
+			cir.setReturnValue(FlowTierNametagCache.get(FlowTierMinecraftCompat.profileId(entry.getProfile()), stats, cleanName));
 		});
 	}
 

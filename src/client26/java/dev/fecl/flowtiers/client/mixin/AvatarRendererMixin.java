@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import dev.fecl.flowtiers.client.FlowTierClientConfig;
-import dev.fecl.flowtiers.client.FlowTierFormatter;
+import dev.fecl.flowtiers.client.FlowTierNametagCache;
 import dev.fecl.flowtiers.client.FlowTiersClientState;
 import dev.fecl.flowtiers.client.RankedMatchDetector;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
@@ -28,7 +28,7 @@ public class AvatarRendererMixin {
 
 		FlowTiersClientState.cache().fetch(player.getUUID());
 		FlowTiersClientState.cache().getIfFresh(player.getUUID()).ifPresent(stats -> {
-			state.nameTag = FlowTierFormatter.nametag(stats, state.nameTag == null ? Component.empty() : state.nameTag);
+			state.nameTag = FlowTierNametagCache.get(player.getUUID(), stats, state.nameTag == null ? Component.empty() : state.nameTag);
 		});
 	}
 }

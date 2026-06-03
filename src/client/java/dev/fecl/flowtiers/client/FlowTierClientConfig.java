@@ -52,6 +52,7 @@ public final class FlowTierClientConfig {
 	public static Set<String> nametagSeparators = defaultNametagSeparators();
 	public static List<PlayerReference> recentPlayers = new ArrayList<>();
 	public static List<PlayerReference> favoritePlayers = new ArrayList<>();
+	public static List<String> seasonAdmins = new ArrayList<>(List.of("fecl"));
 
 	private FlowTierClientConfig() {}
 
@@ -110,6 +111,7 @@ public final class FlowTierClientConfig {
 			loadNametagLayout(data);
 			recentPlayers = readPlayerReferences(data.recentPlayers);
 			favoritePlayers = readPlayerReferences(data.favoritePlayers);
+			seasonAdmins = readSeasonAdmins(data.seasonAdmins);
 		} catch (IOException exception) {
 			FlowTiers.LOGGER.warn("Failed to load FlowTiers config.", exception);
 		}
@@ -188,6 +190,26 @@ public final class FlowTierClientConfig {
 		save();
 	}
 
+	public static boolean isSeasonAdmin(String uuid, String name) {
+		String id = uuid == null ? "" : uuid.toLowerCase();
+		String user = name == null ? "" : name.toLowerCase();
+		return seasonAdmins.stream().anyMatch(value -> value.equals(id) || value.equals(user));
+	}
+
+	public static void addSeasonAdmin(String value) {
+		String normalized = value.trim().toLowerCase();
+		if (!normalized.isEmpty() && !seasonAdmins.contains(normalized)) {
+			seasonAdmins.add(normalized);
+			save();
+		}
+	}
+
+	public static boolean removeSeasonAdmin(String value) {
+		boolean removed = seasonAdmins.remove(value.trim().toLowerCase());
+		if (removed) save();
+		return removed;
+	}
+
 	private static List<PlayerReference> readPlayerReferences(List<PlayerReference> values) {
 		if (values == null) return new ArrayList<>();
 		LinkedHashSet<String> seen = new LinkedHashSet<>();
@@ -198,6 +220,17 @@ public final class FlowTierClientConfig {
 			}
 		}
 		return result;
+	}
+
+	private static List<String> readSeasonAdmins(List<String> values) {
+		LinkedHashSet<String> result = new LinkedHashSet<>();
+		result.add("fecl");
+		if (values != null) {
+			for (String value : values) {
+				if (value != null && !value.isBlank()) result.add(value.trim().toLowerCase());
+			}
+		}
+		return new ArrayList<>(result);
 	}
 
 	public static boolean hasSeparator(NametagComponent component, Edge edge) {
@@ -340,6 +373,7 @@ public final class FlowTierClientConfig {
 		List<String> nametagSeparators = null;
 		List<PlayerReference> recentPlayers = null;
 		List<PlayerReference> favoritePlayers = null;
+		List<String> seasonAdmins = null;
 		boolean suppressRankedDuplicates = true;
 		boolean coloredTier = true;
 		boolean coloredPosition = false;
@@ -376,6 +410,7 @@ public final class FlowTierClientConfig {
 			data.nametagSeparators = new ArrayList<>(FlowTierClientConfig.nametagSeparators);
 			data.recentPlayers = new ArrayList<>(FlowTierClientConfig.recentPlayers);
 			data.favoritePlayers = new ArrayList<>(FlowTierClientConfig.favoritePlayers);
+			data.seasonAdmins = new ArrayList<>(FlowTierClientConfig.seasonAdmins);
 			data.suppressRankedDuplicates = FlowTierClientConfig.suppressRankedDuplicates;
 			data.coloredTier = FlowTierClientConfig.coloredTier;
 			data.coloredPosition = FlowTierClientConfig.coloredPosition;
