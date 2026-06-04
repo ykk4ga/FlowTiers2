@@ -35,7 +35,7 @@ public final class FlowTierNametagCache {
 
 	private static int width(Text text) {
 		MinecraftClient client = MinecraftClient.getInstance();
-		return client == null ? text.getString().length() : client.textRenderer.getWidth(text);
+		return client == null || client.textRenderer == null ? text.getString().length() : client.textRenderer.getWidth(text);
 	}
 
 	private static String signature(FlowTierStats stats, Text playerName) {

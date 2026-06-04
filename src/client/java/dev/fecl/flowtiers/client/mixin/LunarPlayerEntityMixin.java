@@ -19,17 +19,21 @@ public class LunarPlayerEntityMixin {
 
 	@Inject(method = "getDisplayName", at = @At("RETURN"), cancellable = true, require = 0)
 	private void flowtiers$appendLunarNametagStats(CallbackInfoReturnable<Text> cir) {
-		if (!FabricLoader.getInstance().isModLoaded(LUNAR_MOD_ID)) return;
-		if (!FlowTierClientConfig.nametagEnabled) return;
+		try {
+			if (!FabricLoader.getInstance().isModLoaded(LUNAR_MOD_ID)) return;
+			if (!FlowTierClientConfig.nametagEnabled) return;
 
-		Text original = cir.getReturnValue();
-		if (FlowTierClientConfig.suppressRankedDuplicates && RankedMatchDetector.nameAlreadyHasTierInfo(original)) return;
+			Text original = cir.getReturnValue();
+			if (FlowTierClientConfig.suppressRankedDuplicates && RankedMatchDetector.nameAlreadyHasTierInfo(original)) return;
 
-		PlayerEntity player = (PlayerEntity) (Object) this;
-		FlowTiersClientState.cache().fetch(player.getUuid());
-		FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
-			Text baseName = original == null ? player.getName() : original;
-			cir.setReturnValue(FlowTierNametagCache.get(player.getUuid(), stats, baseName));
-		});
+			PlayerEntity player = (PlayerEntity) (Object) this;
+			FlowTiersClientState.cache().fetch(player.getUuid());
+			FlowTiersClientState.cache().getIfFresh(player.getUuid()).ifPresent(stats -> {
+				Text baseName = original == null ? player.getName() : original;
+				cir.setReturnValue(FlowTierNametagCache.get(player.getUuid(), stats, baseName));
+			});
+		} catch (Throwable ignored) {
+			// Lunar Client can patch player name internals; leave the original name untouched if that path is incompatible.
+		}
 	}
 }
